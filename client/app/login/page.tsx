@@ -1,24 +1,50 @@
 "use client";
 
 import React, { Suspense } from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import AuthForm from "@/components/auth/AuthForm";
-import { Sparkles, ArrowLeft, Radio, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/live/learn-bord";
-  const { isAuthenticated } = useAuth();
+  const explicitRedirect = searchParams.get("redirect");
+  const { isAuthenticated, user } = useAuth();
 
-  // If already authenticated, redirect
+  // If already authenticated, redirect based on role
   React.useEffect(() => {
-    if (isAuthenticated) {
-      router.push(redirectUrl);
+    if (isAuthenticated && user) {
+      if (explicitRedirect) {
+        router.push(explicitRedirect);
+      } else if (user.role === "INSTRUCTOR" || user.role === "ADMIN") {
+        router.push("/teacher/dashboard");
+      } else {
+        router.push("/live/learn-bord");
+      }
     }
-  }, [isAuthenticated, redirectUrl, router]);
+  }, [isAuthenticated, user, explicitRedirect, router]);
+
+  const handleAuthSuccess = () => {
+    if (explicitRedirect) {
+      router.push(explicitRedirect);
+      return;
+    }
+
+    try {
+      const stored = localStorage.getItem("inxyme_user");
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u.role === "INSTRUCTOR" || u.role === "ADMIN") {
+          router.push("/teacher/dashboard");
+          return;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    router.push("/live/learn-bord");
+  };
 
   return (
     <div className="w-full max-w-lg bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
@@ -27,8 +53,12 @@ function LoginContent() {
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>Inxyme Educational Suite</span>
         </div>
+
+        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+          Inxyme Security Gateway
+        </span>
       </div>
-    
+
       <div className="text-center mb-6">
         <div className="flex items-center justify-center mx-auto mb-4">
           <img
@@ -43,11 +73,7 @@ function LoginContent() {
         </p>
       </div>
 
-      <AuthForm
-        onSuccess={() => {
-          router.push(redirectUrl);
-        }}
-      />
+      <AuthForm onSuccess={handleAuthSuccess} />
     </div>
   );
 }

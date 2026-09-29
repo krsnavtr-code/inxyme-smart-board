@@ -39,7 +39,8 @@ import {
   Layers,
   ArrowRight,
   Home,
-  LogOut
+  LogOut,
+  GraduationCap
 } from "lucide-react";
 
 interface Stroke {
@@ -603,14 +604,25 @@ export default function LMSPage() {
             </button>
           </nav>
 
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-all"
-            title="Return to Home / Auth"
-          >
-            <Home className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="hidden sm:inline">Auth / Home</span>
-          </Link>
+          {userRole === "INSTRUCTOR" ? (
+            <Link
+              href="/teacher/dashboard"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-all"
+              title="Return to Teacher Dashboard"
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Teacher Dashboard</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-all"
+              title="Return to Login"
+            >
+              <Home className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Login / Portal</span>
+            </Link>
+          )}
         </div>
 
         {/* Server & Role Control */}

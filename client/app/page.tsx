@@ -7,17 +7,21 @@ import { Lock } from "lucide-react";
 
 export default function RootPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated) {
-        router.replace("/live/learn-bord");
+      if (isAuthenticated && user) {
+        if (user.role === "INSTRUCTOR" || user.role === "ADMIN") {
+          router.replace("/teacher/dashboard");
+        } else {
+          router.replace("/live/learn-bord");
+        }
       } else {
         router.replace("/login");
       }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
