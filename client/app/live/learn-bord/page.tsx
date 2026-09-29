@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import io, { Socket } from "socket.io-client";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useAuth } from "@/context/AuthContext";
 import {
   Pen,
   Highlighter,
@@ -36,7 +38,8 @@ import {
   Activity,
   Layers,
   ArrowRight,
-  Home
+  Home,
+  LogOut
 } from "lucide-react";
 
 interface Stroke {
@@ -69,6 +72,8 @@ interface StudentParticipant {
 export default function LMSPage() {
   const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5007";
 
+  const { user, logout } = useAuth();
+
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<"dashboard" | "classroom">("classroom");
 
@@ -78,24 +83,18 @@ export default function LMSPage() {
   const [currentStudentName, setCurrentStudentName] = useState("Aarav Patel (Student)");
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("inxyme_user");
-      if (stored) {
-        const u = JSON.parse(stored);
-        if (u.role === "INSTRUCTOR" || u.role === "STUDENT") {
-          setUserRole(u.role);
-        }
-        if (u.name) {
-          setCurrentStudentName(u.name);
-        }
-        if (u.id) {
-          setCurrentStudentId(u.id);
-        }
+    if (user) {
+      if (user.role === "INSTRUCTOR" || user.role === "STUDENT") {
+        setUserRole(user.role);
       }
-    } catch (e) {
-      console.error("Could not sync user from localStorage", e);
+      if (user.name) {
+        setCurrentStudentName(user.name);
+      }
+      if (user.id) {
+        setCurrentStudentId(user.id);
+      }
     }
-  }, []);
+  }, [user]);
 
   // Live Classroom Room
   const [roomCode] = useState("INX-LIVE-401");
@@ -556,7 +555,8 @@ export default function LMSPage() {
   });
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
+    <ProtectedRoute allowedRoles={["INSTRUCTOR", "STUDENT", "ADMIN"]}>
+      <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
       {/* Top Navigation Bar */}
       <header className="h-16 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-6 flex items-center justify-between z-30 sticky top-0">
         <div className="flex items-center gap-6">
@@ -651,6 +651,25 @@ export default function LMSPage() {
               Student View
             </button>
           </div>
+
+          {user && (
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center font-bold text-xs text-white shadow-md">
+                {user.name.charAt(0)}
+              </div>
+              <div className="hidden xl:block text-left">
+                <p className="text-xs font-semibold text-white leading-tight truncate max-w-[130px]">{user.name}</p>
+                <p className="text-[10px] text-slate-400 leading-tight">{user.role === "INSTRUCTOR" ? "Teacher" : "Student"}</p>
+              </div>
+              <button
+                onClick={logout}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                title="Sign out of LMS"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -1267,5 +1286,6 @@ export default function LMSPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }
