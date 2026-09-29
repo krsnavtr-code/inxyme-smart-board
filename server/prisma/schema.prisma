@@ -1,0 +1,193 @@
+// This is your Prisma schema file for Inxyme Smart Board & LMS Platform
+// Optimized for high-concurrency e-learning environments (100+ simultaneous students)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+  ASSISTANT
+}
+
+enum SessionStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+}
+
+enum HandRaiseStatus {
+  PENDING
+  ACCEPTED
+  LOWERED
+}
+
+enum CanvasBackground {
+  PLAIN
+  GRID
+  RULED
+  BLACKBOARD
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  role         Role        @default(STUDENT)
+  avatar       String?
+  headline     String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  instructedCourses Course[]           @relation("InstructorCourses")
+  enrollments       Enrollment[]
+  hostedSessions    ClassroomSession[] @relation("HostSessions")
+  attendances       SessionAttendance[]
+  chatMessages      ChatMessage[]
+  handRaises        HandRaise[]
+
+  @@map("users")
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  code        String   @unique
+  description String?  @db.Text
+  thumbnail   String?
+  category    String?
+  instructorId String
+  instructor  User     @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  enrollments Enrollment[]
+  sessions    ClassroomSession[]
+
+  @@map("courses")
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  userId     String
+  courseId   String
+  enrolledAt DateTime @default(now())
+  progress   Int      @default(0) // 0-100 percentage
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+model ClassroomSession {
+  id                   String           @id @default(uuid())
+  roomCode             String           @unique
+  title                String
+  description          String?          @db.Text
+  courseId             String
+  course               Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  instructorId         String
+  instructor           User             @relation("HostSessions", fields: [instructorId], references: [id], onDelete: Cascade)
+  status               SessionStatus    @default(SCHEDULED)
+  scheduledStart       DateTime
+  scheduledEnd         DateTime?
+  actualStart          DateTime?
+  actualEnd            DateTime?
+  maxCapacity          Int              @default(150) // Designed for 100-150 concurrent students
+  activePage           Int              @default(1)
+  backgroundStyle      CanvasBackground @default(PLAIN)
+  isStudentDrawingLocked Boolean        @default(true)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  whiteboardPages WhiteboardPage[]
+  attendances     SessionAttendance[]
+  chatMessages    ChatMessage[]
+  handRaises      HandRaise[]
+  lectureNotes    LectureNote[]
+
+  @@map("classroom_sessions")
+}
+
+model WhiteboardPage {
+  id         String           @id @default(uuid())
+  sessionId  String
+  session    ClassroomSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  pageNumber Int
+  strokes    Json?            // Array of vector strokes & drawing commands
+  snapshotUrl String?         // Image URL of rendered canvas for quick loading
+  background CanvasBackground @default(PLAIN)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([sessionId, pageNumber])
+  @@map("whiteboard_pages")
+}
+
+model SessionAttendance {
+  id           String           @id @default(uuid())
+  sessionId    String
+  session      ClassroomSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt     DateTime         @default(now())
+  leftAt       DateTime?
+  durationMins Int              @default(0)
+  status       AttendanceStatus @default(PRESENT)
+
+  @@map("session_attendances")
+}
+
+model ChatMessage {
+  id         String           @id @default(uuid())
+  sessionId  String
+  session    ClassroomSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message    String           @db.Text
+  isDoubt    Boolean          @default(false)
+  isResolved Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@map("chat_messages")
+}
+
+model HandRaise {
+  id        String          @id @default(uuid())
+  sessionId String
+  session   ClassroomSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    HandRaiseStatus @default(PENDING)
+  raisedAt  DateTime        @default(now())
+  resolvedAt DateTime?
+
+  @@map("hand_raises")
+}
+
+model LectureNote {
+  id          String           @id @default(uuid())
+  sessionId   String
+  session     ClassroomSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  title       String
+  pdfUrl      String
+  pageCount   Int              @default(1)
+  generatedAt DateTime         @default(now())
+
+  @@map("lecture_notes")
+}
