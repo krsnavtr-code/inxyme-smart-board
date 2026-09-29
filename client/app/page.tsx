@@ -1,1240 +1,556 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import io, { Socket } from "socket.io-client";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Pen,
-  Highlighter,
-  Square,
-  Circle,
-  Minus,
-  Eraser,
-  Trash2,
-  Download,
-  Users,
-  MessageSquare,
-  Hand,
-  Settings,
-  Grid,
-  AlignJustify,
-  Sun,
-  Moon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Radio,
+  GraduationCap,
   BookOpen,
-  CheckCircle2,
-  Clock,
-  Send,
+  ArrowRight,
+  ShieldCheck,
   Sparkles,
+  LogIn,
+  UserPlus,
+  LogOut,
+  Radio,
   Lock,
-  Unlock,
-  Volume2,
-  FileText,
-  Activity,
-  Layers,
-  ArrowRight
+  Mail,
+  User,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  Laptop
 } from "lucide-react";
 
-interface Stroke {
-  tool: string;
-  points: { x: number; y: number }[];
-  color: string;
-  width: number;
-}
+type RoleType = "STUDENT" | "INSTRUCTOR";
+type AuthMode = "login" | "register";
 
-interface ChatMessage {
-  id: string;
-  sender: string;
-  role: "INSTRUCTOR" | "STUDENT" | "ADMIN";
-  text: string;
-  time: string;
-  isDoubt: boolean;
-  isResolved?: boolean;
-}
-
-interface StudentParticipant {
+interface UserProfile {
   id: string;
   name: string;
-  role: string;
+  email: string;
+  role: RoleType;
   avatar?: string;
-  hasDrawingPermission: boolean;
-  handRaised: boolean;
-  joinedAt: string;
+  headline?: string;
 }
 
-export default function LMSPage() {
+export default function AuthPage() {
+  const router = useRouter();
   const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5007";
 
-  // Navigation tabs
-  const [activeTab, setActiveTab] = useState<"dashboard" | "classroom">("classroom");
+  // Auth State
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [selectedRole, setSelectedRole] = useState<RoleType>("STUDENT");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [roomCode, setRoomCode] = useState("INX-LIVE-401");
 
-  // User State
-  const [userRole, setUserRole] = useState<"INSTRUCTOR" | "STUDENT">("INSTRUCTOR");
-  const [currentStudentId] = useState("stud-" + Math.floor(100 + Math.random() * 900));
-  const [currentStudentName, setCurrentStudentName] = useState("Aarav Patel (Student)");
+  // UI State
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
-  // Live Classroom Room
-  const [roomCode] = useState("INX-LIVE-401");
-  const [isConnected, setIsConnected] = useState(false);
-  const [socket, setSocket] = useState<Socket | null>(null);
-
-  // Smart Board Tools
-  const [activeTool, setActiveTool] = useState<"pen" | "highlighter" | "rect" | "circle" | "line" | "eraser">("pen");
-  const [strokeColor, setStrokeColor] = useState("#4F46E5");
-  const [strokeWidth, setStrokeWidth] = useState(3);
-  const [backgroundStyle, setBackgroundStyle] = useState<"GRID" | "RULED" | "PLAIN" | "BLACKBOARD">("GRID");
-  const [activePage, setActivePage] = useState(1);
-  const [totalPages, setTotalPages] = useState(3);
-  const [strokesByPage, setStrokesByPage] = useState<Record<number, Stroke[]>>({ 1: [], 2: [], 3: [] });
-  const [canDraw, setCanDraw] = useState(true);
-
-  // Live Interactions & 100-Student Roster
-  const [participantsCount, setParticipantsCount] = useState(88);
-  const [roster, setRoster] = useState<StudentParticipant[]>([]);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [isDoubtMode, setIsDoubtMode] = useState(false);
-  const [chatFilter, setChatFilter] = useState<"all" | "doubts">("all");
-  const [myHandRaised, setMyHandRaised] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<"roster" | "chat">("chat");
-
-  // Canvas Refs
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const isDrawingRef = useRef(false);
-  const currentPointsRef = useRef<{ x: number; y: number }[]>([]);
-
-  // 1. Initialize Socket.IO connection
+  // Load existing session on mount
   useEffect(() => {
-    const s = io(SERVER_URL, {
-      transports: ["websocket", "polling"],
-      reconnectionAttempts: 5
-    });
-
-    s.on("connect", () => {
-      setIsConnected(true);
-      s.emit("join_room", {
-        roomId: roomCode,
-        user: {
-          id: userRole === "INSTRUCTOR" ? "inst-001" : currentStudentId,
-          name: userRole === "INSTRUCTOR" ? "Prof. Ramesh Sharma" : currentStudentName,
-          role: userRole,
-          avatar: userRole === "INSTRUCTOR" ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" : undefined
-        }
-      });
-    });
-
-    s.on("disconnect", () => {
-      setIsConnected(false);
-    });
-
-    s.on("room_init_state", (state) => {
-      if (state.strokes) {
-        setStrokesByPage((prev) => ({ ...prev, [state.activePage || 1]: state.strokes }));
+    try {
+      const storedUser = localStorage.getItem("inxyme_user");
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        setCurrentUser(parsed);
+        if (parsed.role) setSelectedRole(parsed.role);
       }
-      if (state.activePage) setActivePage(state.activePage);
-      if (state.background) setBackgroundStyle(state.background);
-      if (state.chatHistory) setChatMessages(state.chatHistory);
-      if (state.participantsCount) setParticipantsCount(Math.max(state.participantsCount, 88));
-      if (userRole === "INSTRUCTOR") {
-        setCanDraw(true);
-      } else {
-        setCanDraw(Boolean(state.canDraw));
-      }
-    });
-
-    s.on("stroke_received", ({ stroke, page }) => {
-      setStrokesByPage((prev) => {
-        const pageStrokes = prev[page] || [];
-        return {
-          ...prev,
-          [page]: [...pageStrokes, stroke]
-        };
-      });
-    });
-
-    s.on("board_cleared", ({ page }) => {
-      setStrokesByPage((prev) => ({
-        ...prev,
-        [page]: []
-      }));
-    });
-
-    s.on("page_changed", ({ page, strokes }) => {
-      setActivePage(page);
-      if (strokes) {
-        setStrokesByPage((prev) => ({ ...prev, [page]: strokes }));
-      }
-    });
-
-    s.on("background_changed", ({ background }) => {
-      setBackgroundStyle(background);
-    });
-
-    s.on("roster_updated", (data) => {
-      if (data.students) {
-        setRoster(data.students);
-        setParticipantsCount(Math.max(data.totalCount, 88));
-      }
-    });
-
-    s.on("new_message_broadcast", (msg) => {
-      setChatMessages((prev) => [...prev, msg]);
-    });
-
-    s.on("doubt_resolved_broadcast", ({ messageId }) => {
-      setChatMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, isResolved: true } : m))
-      );
-    });
-
-    s.on("draw_permission_updated", ({ canDraw: perm }) => {
-      if (userRole === "STUDENT") {
-        setCanDraw(perm);
-      }
-    });
-
-    setSocket(s);
-
-    return () => {
-      s.disconnect();
-    };
-  }, [SERVER_URL, roomCode, userRole, currentStudentId, currentStudentName]);
-
-  // Update permissions when role switches
-  useEffect(() => {
-    if (userRole === "INSTRUCTOR") {
-      setCanDraw(true);
+    } catch (e) {
+      console.error("Error reading stored user session:", e);
     }
-  }, [userRole]);
+  }, []);
 
-  // 2. Canvas Rendering Engine
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Handle high-DPI scaling
-    const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-
-    // Render Canvas Background
-    renderBackground(ctx, rect.width, rect.height, backgroundStyle);
-
-    // Render all saved strokes for active page
-    const currentStrokes = strokesByPage[activePage] || [];
-    currentStrokes.forEach((st) => drawStrokeOnContext(ctx, st));
-  }, [strokesByPage, activePage, backgroundStyle]);
-
-  const renderBackground = (
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    bg: string
-  ) => {
-    if (bg === "BLACKBOARD") {
-      ctx.fillStyle = "#18202F";
-      ctx.fillRect(0, 0, width, height);
-
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      ctx.lineWidth = 1;
-      const step = 28;
-      for (let x = 0; x < width; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
+  // Quick 1-Click Demo Profiles
+  const demoAccounts = {
+    INSTRUCTOR: [
+      {
+        name: "Prof. Ramesh Sharma",
+        email: "ramesh.sharma@inxyme.com",
+        headline: "Lead Faculty & LMS Architect",
+        role: "INSTRUCTOR" as RoleType,
+        tag: "Default Faculty"
+      },
+      {
+        name: "Dr. Priya Nair",
+        email: "priya.nair@inxyme.com",
+        headline: "Professor of Mathematics & Calculus",
+        role: "INSTRUCTOR" as RoleType,
+        tag: "Mathematics"
       }
-      for (let y = 0; y < height; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
+    ],
+    STUDENT: [
+      {
+        name: "Aarav Patel",
+        email: "aarav.patel@student.inxyme.com",
+        headline: "B.Tech CS - Year 3",
+        role: "STUDENT" as RoleType,
+        tag: "Section A"
+      },
+      {
+        name: "Diya Deshmukh",
+        email: "diya.deshmukh@student.inxyme.com",
+        headline: "B.Tech CS - Section A",
+        role: "STUDENT" as RoleType,
+        tag: "Section A"
       }
+    ]
+  };
+
+  const handleSelectDemo = (acc: { name: string; email: string; headline: string; role: RoleType }) => {
+    setSelectedRole(acc.role);
+    setName(acc.name);
+    setEmail(acc.email);
+    setPassword("demo123");
+    setHeadline(acc.headline);
+    setErrorMsg(null);
+  };
+
+  // Submit Handler
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!email.trim()) {
+      setErrorMsg("Please enter your email address.");
       return;
     }
 
-    // Default light modes
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, width, height);
-
-    if (bg === "GRID") {
-      ctx.strokeStyle = "rgba(79, 70, 229, 0.08)";
-      ctx.lineWidth = 1;
-      const step = 25;
-      for (let x = 0; x < width; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < height; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-    } else if (bg === "RULED") {
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.12)";
-      ctx.lineWidth = 1;
-      const step = 32;
-      for (let y = 40; y < height; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-      // Red margin line
-      ctx.strokeStyle = "rgba(239, 68, 68, 0.2)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(60, 0);
-      ctx.lineTo(60, height);
-      ctx.stroke();
-    }
-  };
-
-  const drawStrokeOnContext = (ctx: CanvasRenderingContext2D, stroke: Stroke) => {
-    if (!stroke.points || stroke.points.length === 0) return;
-
-    ctx.save();
-    ctx.strokeStyle = stroke.color;
-    ctx.lineWidth = stroke.width;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    if (stroke.tool === "highlighter") {
-      ctx.globalAlpha = 0.35;
-      ctx.lineWidth = stroke.width * 2.5;
-    } else if (stroke.tool === "eraser") {
-      ctx.strokeStyle = backgroundStyle === "BLACKBOARD" ? "#18202F" : "#FFFFFF";
-      ctx.lineWidth = stroke.width * 3;
+    if (authMode === "register" && !name.trim()) {
+      setErrorMsg("Please enter your full name.");
+      return;
     }
 
-    const pts = stroke.points;
+    setLoading(true);
 
-    if (stroke.tool === "rect" && pts.length >= 2) {
-      const p0 = pts[0];
-      const p1 = pts[pts.length - 1];
-      ctx.strokeRect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
-    } else if (stroke.tool === "circle" && pts.length >= 2) {
-      const p0 = pts[0];
-      const p1 = pts[pts.length - 1];
-      const rx = Math.abs(p1.x - p0.x) / 2;
-      const ry = Math.abs(p1.y - p0.y) / 2;
-      const cx = Math.min(p0.x, p1.x) + rx;
-      const cy = Math.min(p0.y, p1.y) + ry;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    } else if (stroke.tool === "line" && pts.length >= 2) {
-      const p0 = pts[0];
-      const p1 = pts[pts.length - 1];
-      ctx.beginPath();
-      ctx.moveTo(p0.x, p0.y);
-      ctx.lineTo(p1.x, p1.y);
-      ctx.stroke();
-    } else {
-      // Freehand drawing with quadratic smoothing
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for (let i = 1; i < pts.length; i++) {
-        ctx.lineTo(pts[i].x, pts[i].y);
-      }
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  };
-
-  // Mouse / Pointer Event Handlers
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!canDraw) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    isDrawingRef.current = true;
-    currentPointsRef.current = [{ x, y }];
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawingRef.current || !canDraw) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    currentPointsRef.current.push({ x, y });
-
-    // Live intermediate rendering
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const currentStroke: Stroke = {
-      tool: activeTool,
-      points: currentPointsRef.current,
-      color: strokeColor,
-      width: strokeWidth
-    };
-
-    // Fast local preview stroke
-    drawStrokeOnContext(ctx, currentStroke);
-  };
-
-  const handlePointerUp = () => {
-    if (!isDrawingRef.current || !canDraw) return;
-    isDrawingRef.current = false;
-
-    if (currentPointsRef.current.length < 2) return;
-
-    const newStroke: Stroke = {
-      tool: activeTool,
-      points: [...currentPointsRef.current],
-      color: strokeColor,
-      width: strokeWidth
-    };
-
-    // Commit to page state
-    setStrokesByPage((prev) => {
-      const list = prev[activePage] || [];
-      return {
-        ...prev,
-        [activePage]: [...list, newStroke]
+    try {
+      const endpoint = authMode === "login" ? "/api/auth/login" : "/api/auth/register";
+      const payload = {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password: password.trim() || undefined,
+        role: selectedRole,
+        headline: headline.trim() || undefined
       };
-    });
 
-    // Broadcast stroke to all 100 students in the room via WebSocket
-    if (socket && isConnected) {
-      socket.emit("draw_stroke", {
-        roomId: roomCode,
-        stroke: newStroke,
-        page: activePage
+      const res = await fetch(`${SERVER_URL}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
       });
-    }
 
-    currentPointsRef.current = [];
-  };
+      const data = await res.json();
 
-  // Smart Board Actions
-  const handleClearBoard = () => {
-    if (userRole !== "INSTRUCTOR") return;
-    setStrokesByPage((prev) => ({ ...prev, [activePage]: [] }));
-    if (socket && isConnected) {
-      socket.emit("clear_board", { roomId: roomCode, page: activePage });
-    }
-  };
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return;
-    setActivePage(newPage);
-    if (userRole === "INSTRUCTOR" && socket && isConnected) {
-      socket.emit("change_page", { roomId: roomCode, page: newPage });
-    }
-  };
-
-  const handleAddPage = () => {
-    const nextP = totalPages + 1;
-    setTotalPages(nextP);
-    setStrokesByPage((prev) => ({ ...prev, [nextP]: [] }));
-    handlePageChange(nextP);
-  };
-
-  const handleBackgroundChange = (bg: "GRID" | "RULED" | "PLAIN" | "BLACKBOARD") => {
-    setBackgroundStyle(bg);
-    if (userRole === "INSTRUCTOR" && socket && isConnected) {
-      socket.emit("change_background", { roomId: roomCode, background: bg });
-    }
-  };
-
-  const handleDownloadSnapshot = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const url = canvas.toDataURL("image/png");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Inxyme-SmartBoard-Page${activePage}-${roomCode}.png`;
-    a.click();
-  };
-
-  // Chat & Doubts
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-
-    if (socket && isConnected) {
-      socket.emit("send_message", {
-        roomId: roomCode,
-        text: chatInput,
-        isDoubt: isDoubtMode
-      });
-    } else {
-      const localMsg: ChatMessage = {
-        id: "msg-" + Date.now(),
-        sender: userRole === "INSTRUCTOR" ? "Prof. Ramesh Sharma" : currentStudentName,
-        role: userRole,
-        text: chatInput,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        isDoubt: isDoubtMode
-      };
-      setChatMessages((prev) => [...prev, localMsg]);
-    }
-
-    setChatInput("");
-  };
-
-  const handleToggleHandRaise = () => {
-    const nextState = !myHandRaised;
-    setMyHandRaised(nextState);
-
-    if (socket && isConnected) {
-      if (nextState) {
-        socket.emit("raise_hand", { roomId: roomCode });
-      } else {
-        socket.emit("lower_hand", { roomId: roomCode, studentId: currentStudentId });
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Authentication failed. Please check credentials.");
       }
+
+      // Save token and user details to localStorage
+      localStorage.setItem("inxyme_token", data.token);
+      localStorage.setItem("inxyme_user", JSON.stringify(data.user));
+      setCurrentUser(data.user);
+
+      setSuccessMsg(`Welcome, ${data.user.name}! Redirecting to Live Smart Board...`);
+
+      // Auto redirect to /live/learn-bord after successful auth
+      setTimeout(() => {
+        router.push("/live/learn-bord");
+      }, 1200);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to reach server gateway";
+      setErrorMsg(message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleToggleStudentDrawing = (studentId: string, currentPerm: boolean) => {
-    if (userRole !== "INSTRUCTOR") return;
-    if (socket && isConnected) {
-      socket.emit("toggle_student_draw_access", {
-        roomId: roomCode,
-        studentId,
-        allow: !currentPerm
-      });
-    }
+  // Logout Handler
+  const handleLogout = () => {
+    localStorage.removeItem("inxyme_token");
+    localStorage.removeItem("inxyme_user");
+    setCurrentUser(null);
+    setSuccessMsg("Logged out successfully.");
+    setTimeout(() => setSuccessMsg(null), 2500);
   };
-
-  const handleResolveDoubt = (messageId: string) => {
-    if (userRole !== "INSTRUCTOR") return;
-    if (socket && isConnected) {
-      socket.emit("resolve_doubt", { roomId: roomCode, messageId });
-    } else {
-      setChatMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, isResolved: true } : m))
-      );
-    }
-  };
-
-  const filteredChat = chatMessages.filter((m) => {
-    if (chatFilter === "doubts") return m.isDoubt;
-    return true;
-  });
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Top Navigation Bar */}
-      <header className="h-16 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-6 flex items-center justify-between z-30 sticky top-0">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 font-bold text-lg text-white">
-              IX
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-white tracking-tight text-lg">Inxyme</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                  LMS Smart Board
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400">100-Student Real-Time Synchronous Engine</p>
-            </div>
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-indigo-600 selection:text-white relative overflow-hidden font-sans">
+      {/* Background Ambient Glows */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
+      <div className="absolute bottom-10 right-1/4 w-[28rem] h-[28rem] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      {/* Top Header */}
+      <header className="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md px-6 py-4 flex items-center justify-between z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/25 font-bold text-white text-base">
+            IX
           </div>
-
-          <nav className="hidden md:flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setActiveTab("classroom")}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                activeTab === "classroom"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-300" />
-              Live Classroom ({roomCode})
-            </button>
-            <button
-              onClick={() => setActiveTab("dashboard")}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                activeTab === "dashboard"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Student Portal & Courses
-            </button>
-          </nav>
-        </div>
-
-        {/* Server & Role Control */}
-        <div className="flex items-center gap-4">
-          {/* Concurrency Telemetry */}
-          <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
-              <span className="text-slate-300 font-medium">
-                {isConnected ? "Gateway Online (Port 5007)" : "Reconnecting Gateway..."}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-white text-lg tracking-tight">Inxyme</span>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                LMS & Smart Board
               </span>
             </div>
-            <span className="text-slate-600">|</span>
-            <div className="flex items-center gap-1.5 text-indigo-400 font-semibold">
-              <Users className="w-3.5 h-3.5" />
-              <span>{participantsCount} Students Live</span>
-            </div>
+            <p className="text-[11px] text-slate-400">High-Concurrency Live Virtual Classroom</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="text-slate-300 font-medium">Gateway: Active (Port 5007)</span>
           </div>
 
-          {/* Role Switcher */}
-          <div className="flex items-center gap-2 bg-slate-900 p-1 rounded-lg border border-slate-800">
-            <span className="text-[11px] text-slate-400 pl-2">Role:</span>
-            <button
-              onClick={() => setUserRole("INSTRUCTOR")}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-                userRole === "INSTRUCTOR"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Instructor Studio
-            </button>
-            <button
-              onClick={() => setUserRole("STUDENT")}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-                userRole === "STUDENT"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Student View
-            </button>
-          </div>
+          <Link
+            href="/live/learn-bord"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-700/60 transition-all hover:border-slate-500"
+          >
+            <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+            <span>Live Classroom</span>
+          </Link>
         </div>
       </header>
 
       {/* Main Content Area */}
-      {activeTab === "classroom" ? (
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          {/* Smart Board Work Area */}
-          <div className="flex-1 flex flex-col bg-slate-950 p-4 gap-3 relative">
-            {/* Top Whiteboard Control Bar */}
-            <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-xl">
-              {/* Tool Selection */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-slate-400 mr-1">Tools:</span>
-                <button
-                  disabled={!canDraw}
-                  onClick={() => setActiveTool("pen")}
-                  className={`p-2 rounded-xl transition-all ${
-                    activeTool === "pen"
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/40"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-40"
-                  }`}
-                  title="Pen Tool"
-                >
-                  <Pen className="w-4 h-4" />
-                </button>
-                <button
-                  disabled={!canDraw}
-                  onClick={() => setActiveTool("highlighter")}
-                  className={`p-2 rounded-xl transition-all ${
-                    activeTool === "highlighter"
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/40"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-40"
-                  }`}
-                  title="Highlighter"
-                >
-                  <Highlighter className="w-4 h-4" />
-                </button>
-                <button
-                  disabled={!canDraw}
-                  onClick={() => setActiveTool("rect")}
-                  className={`p-2 rounded-xl transition-all ${
-                    activeTool === "rect"
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/40"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-40"
-                  }`}
-                  title="Rectangle"
-                >
-                  <Square className="w-4 h-4" />
-                </button>
-                <button
-                  disabled={!canDraw}
-                  onClick={() => setActiveTool("circle")}
-                  className={`p-2 rounded-xl transition-all ${
-                    activeTool === "circle"
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/40"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-40"
-                  }`}
-                  title="Circle"
-                >
-                  <Circle className="w-4 h-4" />
-                </button>
-                <button
-                  disabled={!canDraw}
-                  onClick={() => setActiveTool("line")}
-                  className={`p-2 rounded-xl transition-all ${
-                    activeTool === "line"
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/40"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-40"
-                  }`}
-                  title="Straight Line"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <button
-                  disabled={!canDraw}
-                  onClick={() => setActiveTool("eraser")}
-                  className={`p-2 rounded-xl transition-all ${
-                    activeTool === "eraser"
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/40"
-                      : "text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-40"
-                  }`}
-                  title="Eraser"
-                >
-                  <Eraser className="w-4 h-4" />
-                </button>
-
-                {userRole === "INSTRUCTOR" && (
-                  <button
-                    onClick={handleClearBoard}
-                    className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/20 transition-all ml-1"
-                    title="Clear Active Board"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+      <div className="flex-1 flex items-center justify-center px-4 py-10 z-10">
+        <div className="w-full max-w-xl">
+          {/* Active Session Card (If User Already Authenticated) */}
+          {currentUser ? (
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-6 opacity-10">
+                <ShieldCheck className="w-36 h-36 text-indigo-400" />
               </div>
 
-              {/* Color & Stroke Width */}
-              <div className="flex items-center gap-3">
-                {/* Palette */}
-                <div className="flex items-center gap-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
-                  {["#4F46E5", "#10B981", "#EF4444", "#3B82F6", "#F59E0B", "#1E293B", "#FFFFFF"].map((col) => (
-                    <button
-                      key={col}
-                      onClick={() => setStrokeColor(col)}
-                      style={{ backgroundColor: col }}
-                      className={`w-5 h-5 rounded-full border-2 transition-transform ${
-                        strokeColor === col ? "scale-125 border-white shadow-md" : "border-transparent opacity-80 hover:opacity-100"
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-emerald-500 p-0.5 shadow-xl shadow-indigo-600/30">
+                  <div className="w-full h-full rounded-[14px] bg-slate-950 flex items-center justify-center font-bold text-2xl text-white">
+                    {currentUser.name ? currentUser.name.charAt(0) : "U"}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-white">{currentUser.name}</h2>
+                    <span
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                        currentUser.role === "INSTRUCTOR"
+                          ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
+                          : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                       }`}
-                    />
-                  ))}
-                </div>
-
-                {/* Width Picker */}
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <span>Size:</span>
-                  <input
-                    type="range"
-                    min="2"
-                    max="20"
-                    value={strokeWidth}
-                    onChange={(e) => setStrokeWidth(Number(e.target.value))}
-                    className="w-20 accent-indigo-500 cursor-pointer"
-                  />
-                  <span className="font-mono text-slate-300 w-4">{strokeWidth}</span>
+                    >
+                      {currentUser.role === "INSTRUCTOR" ? "Teacher / Faculty" : "Student Learner"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-400">{currentUser.email}</p>
+                  <p className="text-xs text-indigo-300 mt-0.5">{currentUser.headline || "Active Member"}</p>
                 </div>
               </div>
 
-              {/* Background Styles & Multi-Page Navigation */}
-              <div className="flex items-center gap-3">
-                {/* Background selector */}
-                <div className="flex items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800">
-                  <button
-                    onClick={() => handleBackgroundChange("GRID")}
-                    className={`p-1.5 rounded-lg text-xs transition-all ${
-                      backgroundStyle === "GRID" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                    title="Engineering Grid"
+              {/* Quick Launch Room Section */}
+              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 mb-6">
+                <label className="text-xs font-semibold text-slate-300 block mb-2">
+                  Target Classroom Room Code
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-mono font-bold tracking-wider text-white focus:outline-none focus:border-indigo-500"
+                    placeholder="INX-LIVE-401"
+                  />
+                  <Link
+                    href={`/live/learn-bord?room=${roomCode}`}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02]"
                   >
-                    <Grid className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleBackgroundChange("RULED")}
-                    className={`p-1.5 rounded-lg text-xs transition-all ${
-                      backgroundStyle === "RULED" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                    title="Ruled Notebook"
-                  >
-                    <AlignJustify className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleBackgroundChange("PLAIN")}
-                    className={`p-1.5 rounded-lg text-xs transition-all ${
-                      backgroundStyle === "PLAIN" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                    title="Plain Whiteboard"
-                  >
-                    <Sun className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleBackgroundChange("BLACKBOARD")}
-                    className={`p-1.5 rounded-lg text-xs transition-all ${
-                      backgroundStyle === "BLACKBOARD" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                    title="Dark Blackboard"
-                  >
-                    <Moon className="w-3.5 h-3.5" />
-                  </button>
+                    <span>Launch Board</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
                 </div>
+                <p className="text-[11px] text-slate-500 mt-2">
+                  Role: {currentUser.role === "INSTRUCTOR" ? "Instructor Privileges (Draw & Broadcast)" : "Student Mode (Real-Time Canvas & Doubt Raise)"}
+                </p>
+              </div>
 
-                {/* Page Manager */}
-                <div className="flex items-center gap-1.5 bg-slate-950/60 px-2 py-1 rounded-xl border border-slate-800 text-xs">
-                  <button
-                    onClick={() => handlePageChange(activePage - 1)}
-                    disabled={activePage <= 1}
-                    className="p-1 rounded hover:bg-slate-800 disabled:opacity-30"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="font-semibold text-slate-300">
-                    Page {activePage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => handlePageChange(activePage + 1)}
-                    disabled={activePage >= totalPages}
-                    className="p-1 rounded hover:bg-slate-800 disabled:opacity-30"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                  {userRole === "INSTRUCTOR" && (
-                    <button
-                      onClick={handleAddPage}
-                      className="p-1 rounded bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/40 ml-1"
-                      title="Add New Board Page"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Export / Notes Download */}
+              {/* Actions */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
                 <button
-                  onClick={handleDownloadSnapshot}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold shadow-sm transition-all border border-slate-700"
-                  title="Export Current Board Page"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-xs font-medium text-rose-400 hover:text-rose-300 transition-colors py-1.5"
                 >
-                  <Download className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Notes</span>
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out / Switch Account</span>
                 </button>
+
+                <Link
+                  href="/live/learn-bord"
+                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 underline underline-offset-4"
+                >
+                  Direct Smart Board Link (/live/learn-bord)
+                </Link>
               </div>
             </div>
-
-            {/* Smart Board Canvas Area */}
-            <div className="flex-1 relative rounded-3xl overflow-hidden border border-slate-800 shadow-2xl bg-white flex items-center justify-center">
-              <canvas
-                ref={canvasRef}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                className={`w-full h-full touch-none select-none ${
-                  canDraw ? "cursor-crosshair" : "cursor-default"
-                }`}
-              />
-
-              {/* Status Overlay Badge */}
-              <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none">
-                <span className="px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-slate-200 text-xs font-medium border border-slate-700/60 shadow-lg flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Interactive Smart Board • {backgroundStyle} Mode
-                </span>
-                {!canDraw && (
-                  <span className="px-3 py-1 rounded-full bg-amber-500/90 text-slate-950 text-xs font-bold shadow-lg flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> Read-Only Mode (Instructor Presenting)
-                  </span>
-                )}
+          ) : (
+            /* Auth Login / Register Card */
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+              {/* Header Title */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-3">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Role-Based Authentication
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Welcome to Inxyme LMS
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                  Choose your role to access synchronized classroom smart boards
+                </p>
               </div>
 
-              {/* Student Raise Hand Button Float */}
-              {userRole === "STUDENT" && (
-                <div className="absolute bottom-6 left-6 z-20">
-                  <button
-                    onClick={handleToggleHandRaise}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm shadow-2xl transition-all transform active:scale-95 ${
-                      myHandRaised
-                        ? "bg-amber-500 text-slate-950 animate-bounce"
-                        : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-600/40"
+              {/* Role Selection Tabs */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {/* Student Option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole("STUDENT")}
+                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all text-center ${
+                    selectedRole === "STUDENT"
+                      ? "bg-indigo-600/15 border-indigo-500 shadow-lg shadow-indigo-600/20 text-white"
+                      : "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60"
+                  }`}
+                >
+                  <div
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center mb-2 transition-transform ${
+                      selectedRole === "STUDENT" ? "bg-indigo-600 text-white scale-110 shadow-md shadow-indigo-600/40" : "bg-slate-800 text-slate-300"
                     }`}
                   >
-                    <Hand className="w-5 h-5" />
-                    <span>{myHandRaised ? "Hand Raised (Waiting for Teacher)" : "Raise Hand to Speak"}</span>
-                  </button>
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <span className="font-bold text-sm">Student</span>
+                  <span className="text-[11px] text-slate-400 mt-0.5">Enrolled Learner</span>
+                </button>
+
+                {/* Teacher / Instructor Option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole("INSTRUCTOR")}
+                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all text-center ${
+                    selectedRole === "INSTRUCTOR"
+                      ? "bg-indigo-600/15 border-indigo-500 shadow-lg shadow-indigo-600/20 text-white"
+                      : "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-900/60"
+                  }`}
+                >
+                  <div
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center mb-2 transition-transform ${
+                      selectedRole === "INSTRUCTOR" ? "bg-indigo-600 text-white scale-110 shadow-md shadow-indigo-600/40" : "bg-slate-800 text-slate-300"
+                    }`}
+                  >
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <span className="font-bold text-sm">Teacher / Faculty</span>
+                  <span className="text-[11px] text-slate-400 mt-0.5">Host & Broadcast</span>
+                </button>
+              </div>
+
+              {/* Login / Register Toggle */}
+              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 mb-6">
+                <button
+                  type="button"
+                  onClick={() => setAuthMode("login")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    authMode === "login"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode("register")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    authMode === "register"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Register Account</span>
+                </button>
+              </div>
+
+              {/* Quick Demo Accounts Selection */}
+              <div className="mb-6 bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3.5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Laptop className="w-3.5 h-3.5 text-indigo-400" />
+                    Quick 1-Click Demo Profiles ({selectedRole === "INSTRUCTOR" ? "Teacher" : "Student"})
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {demoAccounts[selectedRole].map((acc) => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      onClick={() => handleSelectDemo(acc)}
+                      className="text-left p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800/90 border border-slate-800 hover:border-indigo-500/50 transition-all group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-200 group-hover:text-indigo-300">
+                          {acc.name}
+                        </span>
+                        <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                          {acc.tag}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 truncate mt-0.5">{acc.email}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Feedback Alerts */}
+              {errorMsg && (
+                <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-3 text-xs text-rose-300 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{errorMsg}</span>
                 </div>
               )}
-            </div>
-          </div>
 
-          {/* Right Live Interaction Panel (Roster & Chat) */}
-          <div className="w-full lg:w-96 border-l border-slate-800 bg-slate-950 flex flex-col h-auto lg:h-full">
-            {/* Panel Header Tabs */}
-            <div className="flex items-center border-b border-slate-800 px-4 pt-3 pb-2 gap-2">
-              <button
-                onClick={() => setRightPanelTab("chat")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-xl transition-all ${
-                  rightPanelTab === "chat"
-                    ? "bg-slate-800 text-white border border-slate-700"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
-                Live Doubts & Chat
-              </button>
-              <button
-                onClick={() => setRightPanelTab("roster")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-xl transition-all ${
-                  rightPanelTab === "roster"
-                    ? "bg-slate-800 text-white border border-slate-700"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <Users className="w-3.5 h-3.5 text-emerald-400" />
-                100 Students Roster ({participantsCount})
-              </button>
-            </div>
-
-            {/* TAB 1: Live Chat & Doubts */}
-            {rightPanelTab === "chat" && (
-              <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Chat Filters */}
-                <div className="p-3 border-b border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-                    <button
-                      onClick={() => setChatFilter("all")}
-                      className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                        chatFilter === "all" ? "bg-indigo-600 text-white" : "text-slate-400"
-                      }`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setChatFilter("doubts")}
-                      className={`px-3 py-1 rounded-lg font-medium transition-all flex items-center gap-1 ${
-                        chatFilter === "doubts" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-400"
-                      }`}
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      Doubts Only
-                    </button>
-                  </div>
-                  <span className="text-[11px] text-slate-500">{filteredChat.length} Messages</span>
+              {successMsg && (
+                <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-xs text-emerald-300 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>{successMsg}</span>
                 </div>
+              )}
 
-                {/* Messages List */}
-                <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                  {filteredChat.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`p-3 rounded-2xl border transition-all ${
-                        msg.isDoubt
-                          ? msg.isResolved
-                            ? "bg-emerald-950/20 border-emerald-800/40 text-emerald-200"
-                            : "bg-amber-950/30 border-amber-500/40 text-amber-200 shadow-lg shadow-amber-500/5"
-                          : msg.role === "INSTRUCTOR"
-                          ? "bg-indigo-950/30 border-indigo-500/30 text-indigo-100"
-                          : "bg-slate-900 border-slate-800 text-slate-200"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-[11px] mb-1">
-                        <span className="font-bold flex items-center gap-1.5">
-                          {msg.sender}
-                          {msg.role === "INSTRUCTOR" && (
-                            <span className="px-1.5 py-0.2 bg-indigo-500 text-white text-[9px] font-extrabold rounded">
-                              TEACHER
-                            </span>
-                          )}
-                          {msg.isDoubt && (
-                            <span className="px-1.5 py-0.2 bg-amber-500 text-slate-950 text-[9px] font-extrabold rounded">
-                              DOUBT
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-slate-500">{msg.time}</span>
-                      </div>
-                      <p className="text-xs leading-relaxed">{msg.text}</p>
-
-                      {/* Instructor doubt resolve button */}
-                      {msg.isDoubt && userRole === "INSTRUCTOR" && !msg.isResolved && (
-                        <button
-                          onClick={() => handleResolveDoubt(msg.id)}
-                          className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Mark Doubt as Answered
-                        </button>
-                      )}
-                      {msg.isResolved && (
-                        <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
-                          <CheckCircle2 className="w-3 h-3" /> Resolved in lecture
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Send Message Form */}
-                <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800 bg-slate-900/60">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isDoubtMode}
-                        onChange={(e) => setIsDoubtMode(e.target.checked)}
-                        className="rounded accent-amber-500 cursor-pointer"
-                      />
-                      <span className={isDoubtMode ? "text-amber-400 font-semibold" : ""}>
-                        Ask as a Question / Doubt
-                      </span>
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder={isDoubtMode ? "Type your doubt for the teacher..." : "Message 100 students in room..."}
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-                    />
-                    <button
-                      type="submit"
-                      className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* TAB 2: 100 Students Roster */}
-            {rightPanelTab === "roster" && (
-              <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                <div className="bg-slate-900/80 rounded-2xl p-3 border border-slate-800 text-xs flex items-center justify-between">
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {authMode === "register" && (
                   <div>
-                    <span className="text-slate-400">Class Concurrency Capacity:</span>
-                    <p className="font-extrabold text-indigo-400 text-sm">{participantsCount} / 150 Seats Active</p>
+                    <label className="text-xs font-medium text-slate-300 block mb-1.5">Full Name</label>
+                    <div className="relative">
+                      <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder={selectedRole === "INSTRUCTOR" ? "e.g. Prof. Arvind Kumar" : "e.g. Rohan Sharma"}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                        required={authMode === "register"}
+                      />
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-slate-400">Sync Latency:</span>
-                    <p className="font-semibold text-emerald-400 text-xs">~24 ms (WebSocket)</p>
+                )}
+
+                <div>
+                  <label className="text-xs font-medium text-slate-300 block mb-1.5">Email Address</label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={selectedRole === "INSTRUCTOR" ? "faculty@inxyme.com" : "student@inxyme.com"}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                      required
+                    />
                   </div>
                 </div>
 
-                <div className="text-xs font-bold text-slate-400 tracking-wide uppercase px-1">
-                  Active Classroom Participants
-                </div>
-
-                {/* Instructor Item */}
-                <div className="p-3 rounded-2xl bg-indigo-950/40 border border-indigo-500/40 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-xs text-white">
-                      RS
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-xs text-white">Prof. Ramesh Sharma</h4>
-                      <p className="text-[10px] text-indigo-300">Host & Presenter (Drawing Master)</p>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">
-                    Instructor
-                  </span>
-                </div>
-
-                {/* Sample Concurrent Students List */}
-                {[
-                  { id: "stud-101", name: "Aarav Patel", handRaised: true, canDraw: true },
-                  { id: "stud-102", name: "Diya Deshmukh", handRaised: false, canDraw: false },
-                  { id: "stud-103", name: "Vikram Singhania", handRaised: true, canDraw: false },
-                  { id: "stud-104", name: "Ananya Iyer", handRaised: false, canDraw: false },
-                  { id: "stud-105", name: "Rohan Verma", handRaised: false, canDraw: false },
-                  { id: "stud-106", name: "Sneha Mukherjee", handRaised: false, canDraw: false }
-                ].map((st) => (
-                  <div
-                    key={st.id}
-                    className="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center font-semibold text-[11px] text-slate-300">
-                        {st.name.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-slate-200 flex items-center gap-1.5">
-                          {st.name}
-                          {st.handRaised && (
-                            <span className="flex items-center gap-0.5 text-amber-400 font-bold text-[10px]">
-                              <Hand className="w-3 h-3 animate-bounce" /> Hand
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-slate-500">ID: #{st.id}</p>
-                      </div>
-                    </div>
-
-                    {/* Teacher can grant/revoke board drawing permissions */}
-                    {userRole === "INSTRUCTOR" ? (
-                      <button
-                        onClick={() => handleToggleStudentDrawing(st.id, st.canDraw)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold text-[10px] transition-all ${
-                          st.canDraw
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                            : "bg-slate-800 text-slate-400 hover:text-white"
-                        }`}
-                        title="Toggle student board drawing access"
-                      >
-                        {st.canDraw ? (
-                          <>
-                            <Unlock className="w-3 h-3" /> Can Draw
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-3 h-3" /> Locked
-                          </>
-                        )}
-                      </button>
-                    ) : (
-                      <span className="text-[10px] text-slate-500">
-                        {st.canDraw ? "Drawing Granted" : "Listening"}
-                      </span>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-medium text-slate-300">Password</label>
+                    {authMode === "login" && (
+                      <span className="text-[11px] text-slate-500">(Optional for demo login)</span>
                     )}
                   </div>
-                ))}
-
-                <div className="text-center py-2 text-slate-500 text-[11px]">
-                  + 82 more enrolled students synchronously connected
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        /* TAB: Student LMS Dashboard & Courses */
-        <div className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full space-y-8">
-          {/* Welcome Banner */}
-          <div className="rounded-3xl p-8 bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 border border-indigo-800/40 relative overflow-hidden shadow-2xl">
-            <div className="relative z-10 max-w-2xl space-y-3">
-              <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/30">
-                100+ Concurrent Student LMS Active
-              </span>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-                Welcome to Inxyme Live LMS & Smart Classroom
-              </h1>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                Connect seamlessly with high-resolution digital whiteboards, synchronous vector derivations,
-                interactive doubts, and auto-compiled lecture notes.
-              </p>
-              <div className="pt-2 flex items-center gap-3">
+
+                {authMode === "register" && (
+                  <div>
+                    <label className="text-xs font-medium text-slate-300 block mb-1.5">
+                      {selectedRole === "INSTRUCTOR" ? "Department / Designation" : "Branch / Year"}
+                    </label>
+                    <input
+                      type="text"
+                      value={headline}
+                      onChange={(e) => setHeadline(e.target.value)}
+                      placeholder={selectedRole === "INSTRUCTOR" ? "e.g. Professor of Physics" : "e.g. Computer Science - Year 3"}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+                )}
+
                 <button
-                  onClick={() => setActiveTab("classroom")}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/40 flex items-center gap-2"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 hover:from-indigo-500 hover:to-emerald-400 text-white font-semibold text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
                 >
-                  <Radio className="w-4 h-4 text-emerald-400" />
-                  Join Live Lecture #{roomCode}
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span>
+                        {authMode === "login"
+                          ? `Sign In as ${selectedRole === "INSTRUCTOR" ? "Teacher" : "Student"}`
+                          : `Create ${selectedRole === "INSTRUCTOR" ? "Teacher" : "Student"} Account`}
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
+              </form>
+
+              {/* Direct Link to live smart board */}
+              <div className="mt-6 text-center pt-4 border-t border-slate-800/80">
+                <Link
+                  href="/live/learn-bord"
+                  className="text-xs text-slate-400 hover:text-indigo-400 inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <Radio className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Direct link to Live Smart Board (/live/learn-bord)</span>
+                </Link>
               </div>
             </div>
-          </div>
-
-          {/* Quick Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-2">
-              <span className="text-slate-400 text-xs font-medium">Active Live Classes</span>
-              <h3 className="text-2xl font-extrabold text-white">2 Live</h3>
-              <p className="text-[11px] text-emerald-400 font-semibold">100 Students Connected</p>
-            </div>
-            <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-2">
-              <span className="text-slate-400 text-xs font-medium">Enrolled Courses</span>
-              <h3 className="text-2xl font-extrabold text-white">4 Courses</h3>
-              <p className="text-[11px] text-indigo-400 font-semibold">Semester IV Full Access</p>
-            </div>
-            <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-2">
-              <span className="text-slate-400 text-xs font-medium">Lecture Notes Available</span>
-              <h3 className="text-2xl font-extrabold text-white">18 PDFs</h3>
-              <p className="text-[11px] text-slate-400 font-semibold">Auto-Compiled from Smart Board</p>
-            </div>
-            <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-2">
-              <span className="text-slate-400 text-xs font-medium">Attendance Score</span>
-              <h3 className="text-2xl font-extrabold text-emerald-400">96.8%</h3>
-              <p className="text-[11px] text-slate-400 font-semibold">Tracked via Real-Time Heartbeat</p>
-            </div>
-          </div>
-
-          {/* Courses & Lectures Catalog */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-white">Your Courses & Live Smart Board Sessions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Course 1 */}
-              <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 space-y-4 hover:border-slate-700 transition-all">
-                <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold">
-                    CS-401 • Real-Time Systems
-                  </span>
-                  <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    LIVE NOW
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold text-white">
-                  Advanced Computer Networks & Synchronous Canvas Engineering
-                </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Deep dive into real-time multiplexing, WebSocket protocol buffers, and low-latency digital whiteboard broadcasts for 100+ concurrent students.
-                </p>
-                <div className="pt-2 flex items-center justify-between border-t border-slate-800/80">
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <Users className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>88 Students in Classroom</span>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("classroom")}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
-                  >
-                    Enter Live Studio <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Course 2 */}
-              <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 space-y-4 hover:border-slate-700 transition-all">
-                <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-bold">
-                    MATH-302 • Calculus III
-                  </span>
-                  <span className="text-slate-400 text-xs font-medium">Starts in 2h 15m</span>
-                </div>
-                <h3 className="text-lg font-bold text-white">
-                  Engineering Mathematics: Vector Calculus & Stokes Theorem
-                </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Interactive multi-dimensional surface derivations on Inxyme grid whiteboard with synchronous equation plotting.
-                </p>
-                <div className="pt-2 flex items-center justify-between border-t border-slate-800/80">
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <Clock className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Scheduled 4:00 PM</span>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("classroom")}
-                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5"
-                  >
-                    Preview Board
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-900 bg-slate-950 px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <span>&copy; 2026 Inxyme LMS. Real-Time Educational Technology Platform.</span>
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            JWT Role Protected
+          </span>
+          <span className="flex items-center gap-1">
+            <Radio className="w-3.5 h-3.5 text-indigo-400" />
+            100-Concurrent Nodes Room
+          </span>
+        </div>
+      </footer>
+    </main>
   );
 }
