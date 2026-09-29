@@ -56,6 +56,13 @@ export default function AuthModal({
 
         {/* Header */}
         <div className="text-center mb-5">
+          <div className="flex items-center justify-center mb-3">
+            <img
+              src="https://www.inxyme.com/api/upload/file/Inxyme-png-logo-2232.png"
+              alt="Inxyme Logo"
+              className="h-9 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(79,70,229,0.2)]"
+            />
+          </div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
             <Sparkles className="w-3.5 h-3.5" />
             Inxyme Security Authentication

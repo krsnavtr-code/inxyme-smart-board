@@ -561,12 +561,15 @@ export default function LMSPage() {
       <header className="h-16 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-6 flex items-center justify-between z-30 sticky top-0">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 font-bold text-lg text-white">
-              IX
-            </div>
-            <div>
+            <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+              <img
+                src="https://www.inxyme.com/api/upload/file/Inxyme-png-logo-2232.png"
+                alt="Inxyme Logo"
+                className="h-8 sm:h-9 w-auto object-contain"
+              />
+            </Link>
+            <div className="hidden sm:block">
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-white tracking-tight text-lg">Inxyme</span>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
                   LMS Smart Board
                 </span>

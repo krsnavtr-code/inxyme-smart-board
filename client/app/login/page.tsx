@@ -23,24 +23,21 @@ function LoginContent() {
   return (
     <div className="w-full max-w-lg bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
       <div className="flex items-center justify-between mb-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Home</span>
-        </Link>
-
-        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-          Inxyme Security Gateway
-        </span>
-      </div>
-
-      <div className="text-center mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-indigo-600/30 text-white font-black text-xl">
-          IX
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Inxyme Educational Suite</span>
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to Inxyme LMS</h1>
+      </div>
+    
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center mx-auto mb-4">
+          <img
+            src="https://www.inxyme.com/api/upload/file/Inxyme-png-logo-2232.png"
+            alt="Inxyme Logo"
+            className="h-10 sm:h-12 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(79,70,229,0.25)]"
+          />
+        </div>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to Smart Learning</h1>
         <p className="text-xs text-slate-400 mt-1">
           Access high-concurrency smart boards and synchronous lecture sessions
         </p>

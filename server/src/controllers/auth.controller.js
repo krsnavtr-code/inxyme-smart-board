@@ -58,16 +58,29 @@ exports.login = async (req, res) => {
 
     // 3. If still not found, create new on-the-fly user (resilient demo/test mode)
     if (!user) {
+      let inferredRole = 'STUDENT';
+      if (
+        cleanEmail.includes('faculty') ||
+        cleanEmail.includes('instructor') ||
+        cleanEmail.includes('teacher') ||
+        cleanEmail.includes('prof') ||
+        cleanEmail.includes('ramesh') ||
+        cleanEmail.includes('priya') ||
+        (role && normalizeRole(role) === 'INSTRUCTOR')
+      ) {
+        inferredRole = 'INSTRUCTOR';
+      }
+
       const defaultName = cleanEmail.split('@')[0].replace(/[\._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
       user = {
-        id: (targetRole === 'INSTRUCTOR' ? 'inst-' : 'stud-') + Date.now(),
-        name: defaultName || (targetRole === 'INSTRUCTOR' ? 'Faculty Instructor' : 'Student Learner'),
+        id: (inferredRole === 'INSTRUCTOR' ? 'inst-' : 'stud-') + Date.now(),
+        name: defaultName || (inferredRole === 'INSTRUCTOR' ? 'Faculty Instructor' : 'Student Learner'),
         email: cleanEmail,
-        role: targetRole,
-        avatar: targetRole === 'INSTRUCTOR'
+        role: inferredRole,
+        avatar: inferredRole === 'INSTRUCTOR'
           ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
           : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
-        headline: targetRole === 'INSTRUCTOR' ? 'Senior Faculty Member' : 'Enrolled Student'
+        headline: inferredRole === 'INSTRUCTOR' ? 'Senior Faculty Member' : 'Enrolled Student'
       };
       memoryStore.users.push(user);
     }

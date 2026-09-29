@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -14,7 +14,7 @@ import {
   BookOpen,
   LogIn
 } from "lucide-react";
-import AuthModal from "@/components/auth/AuthModal";
+import AuthModal from "./AuthModal";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -32,15 +32,24 @@ export default function ProtectedRoute({
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
 
+  // Auto redirect to /login if unauthenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+      router.replace(`${redirectTo}${currentPath ? `?redirect=${encodeURIComponent(currentPath)}` : ""}`);
+    }
+  }, [isLoading, isAuthenticated, router, redirectTo]);
+
   // 1. Loading State Skeleton
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-200">
-        <div className="relative flex items-center justify-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center animate-pulse">
-            <Lock className="w-8 h-8 text-indigo-400" />
-          </div>
-          <div className="absolute -inset-1 rounded-2xl bg-indigo-500/20 blur-lg animate-ping" />
+        <div className="flex items-center justify-center mb-5">
+          <img
+            src="https://www.inxyme.com/api/upload/file/Inxyme-png-logo-2232.png"
+            alt="Inxyme Logo"
+            className="h-10 w-auto object-contain animate-pulse filter drop-shadow-[0_4px_12px_rgba(79,70,229,0.25)]"
+          />
         </div>
         <p className="text-sm font-semibold text-slate-300">Verifying LMS Security Credentials...</p>
         <p className="text-xs text-slate-500 mt-1">Connecting to Inxyme Security Vault</p>
@@ -48,22 +57,25 @@ export default function ProtectedRoute({
     );
   }
 
-  // 2. Unauthenticated Interceptor
+  // 2. Unauthenticated Interceptor (Fallback while redirecting)
   if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center px-4 relative overflow-hidden font-sans">
-        {/* Glows */}
         <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
         <div className="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl text-center">
-          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto mb-5 text-rose-400">
-            <ShieldAlert className="w-8 h-8" />
+          <div className="flex items-center justify-center mx-auto mb-4">
+            <img
+              src="https://www.inxyme.com/api/upload/file/Inxyme-png-logo-2232.png"
+              alt="Inxyme Logo"
+              className="h-9 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(79,70,229,0.2)]"
+            />
           </div>
 
           <h2 className="text-2xl font-bold text-white tracking-tight">Authentication Required</h2>
           <p className="text-sm text-slate-400 mt-2">
-            You must be signed in as a <span className="text-indigo-400 font-semibold">Teacher</span> or{" "}
-            <span className="text-emerald-400 font-semibold">Student</span> to access this interactive classroom smart board.
+            Redirecting to login portal... Please sign in as a <span className="text-indigo-400 font-semibold">Teacher</span> or{" "}
+            <span className="text-emerald-400 font-semibold">Student</span> to access the live smart board.
           </p>
 
           <div className="mt-6 space-y-3">
@@ -76,10 +88,10 @@ export default function ProtectedRoute({
             </button>
 
             <Link
-              href="/"
+              href="/login"
               className="w-full py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 text-slate-400 hover:text-white border border-slate-800 text-xs font-medium flex items-center justify-center gap-2 transition-colors block"
             >
-              <span>Return to LMS Home Portal</span>
+              <span>Go to Login Page</span>
             </Link>
           </div>
 
@@ -147,10 +159,10 @@ export default function ProtectedRoute({
               Switch to an Authorized Role
             </button>
             <Link
-              href="/"
+              href="/login"
               className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
             >
-              Back to Home
+              Back to Login
             </Link>
           </div>
         </div>
