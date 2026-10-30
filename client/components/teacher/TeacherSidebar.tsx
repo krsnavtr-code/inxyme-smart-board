@@ -7,7 +7,6 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   BookOpen,
-  Tv,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -34,12 +33,6 @@ export default function TeacherSidebar() {
       label: "Published Courses",
       icon: BookOpen,
       href: "/teacher/courses"
-    },
-    {
-      id: "live-board",
-      label: "Smart Board",
-      icon: Tv,
-      href: "/live/learn-board"
     }
   ];
 
@@ -155,20 +148,8 @@ export default function TeacherSidebar() {
           </nav>
         </div>
 
-        {/* Bottom Section: Quick Smart Board Launch & Logout */}
-        <div className="p-3 border-t border-slate-800/80 space-y-2">
-          {/* Quick Smart Board CTA */}
-          <Link
-            href="/live/learn-board"
-            className={`w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-xs shadow-md shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] ${isCollapsed ? "p-2.5" : ""
-              }`}
-            title="Open Smart Board"
-          >
-            <Tv className="w-4 h-4 shrink-0" />
-            {!isCollapsed && <span>Open Smart Board</span>}
-          </Link>
-
-          {/* Logout Action */}
+        {/* Bottom Section: Logout Action */}
+        <div className="p-3 border-t border-slate-800/80">
           <button
             onClick={logout}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors ${isCollapsed ? "justify-center" : ""

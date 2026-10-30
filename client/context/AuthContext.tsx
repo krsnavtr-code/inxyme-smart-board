@@ -48,11 +48,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback(async (credentials: LoginCredentials): Promise<User> => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${SERVER_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials)
-      });
+      let res: Response;
+      try {
+        res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(credentials)
+        });
+      } catch {
+        res = await fetch(`${SERVER_URL}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(credentials)
+        });
+      }
 
       const data: AuthResponse = await res.json();
       if (!res.ok || !data.success || !data.user || !data.token) {
@@ -117,8 +126,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role: user?.role || null,
     isAuthenticated: !!user && !!token,
     isLoading,
-    isInstructor: user?.role === "INSTRUCTOR" || user?.role === "ADMIN",
-    isStudent: user?.role === "STUDENT",
+    isInstructor:
+      user?.role === "INSTRUCTOR" ||
+      user?.role === "ADMIN" ||
+      user?.role === "teacher" ||
+      user?.role === "admin",
+    isStudent: user?.role === "STUDENT" || user?.role === "student",
     login,
     register,
     logout,

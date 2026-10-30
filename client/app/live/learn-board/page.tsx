@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import io, { Socket } from "socket.io-client";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
@@ -71,6 +72,34 @@ interface StudentParticipant {
 }
 
 export default function LMSPage() {
+  const router = useRouter();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated && user) {
+        router.replace("/teacher/dashboard");
+      } else {
+        router.replace("/login");
+      }
+    }
+  }, [isAuthenticated, isLoading, user, router]);
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
+      <div className="flex items-center justify-center mb-4">
+        <img
+          src="https://www.inxyme.com/api/upload/file/Inxyme-png-logo-2232.png"
+          alt="Inxyme Logo"
+          className="h-9 w-auto object-contain animate-pulse filter drop-shadow-[0_4px_12px_rgba(79,70,229,0.25)]"
+        />
+      </div>
+      <p className="text-sm font-semibold text-slate-300">Redirecting to Teacher Panel...</p>
+    </div>
+  );
+}
+
+function _UnusedLMSBoard() {
   const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5007";
 
   const { user, logout } = useAuth();
@@ -85,8 +114,11 @@ export default function LMSPage() {
 
   useEffect(() => {
     if (user) {
-      if (user.role === "INSTRUCTOR" || user.role === "STUDENT") {
-        setUserRole(user.role);
+      const r = String(user.role || "").toUpperCase();
+      if (r === "INSTRUCTOR" || r === "TEACHER" || r === "ADMIN") {
+        setUserRole("INSTRUCTOR");
+      } else {
+        setUserRole("STUDENT");
       }
       if (user.name) {
         setCurrentStudentName(user.name);

@@ -7,7 +7,6 @@ import { Course } from "@/types/course";
 import {
   BookOpen,
   Search,
-  Tv,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -94,16 +93,6 @@ export default function TeacherCoursesPage() {
 
     return matchesCategory && matchesSearch;
   });
-
-  const handleTeachCourse = (course: Course) => {
-    // Generate a clean room code based on the course slug or ID
-    const roomSuffix = course.slug
-      ? course.slug.split("-")[0].toUpperCase()
-      : course._id.slice(-4).toUpperCase();
-    const roomCode = `INX-${roomSuffix}`;
-
-    router.push(`/live/learn-board?room=${encodeURIComponent(roomCode)}`);
-  };
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans">
@@ -322,13 +311,13 @@ export default function TeacherCoursesPage() {
                         )}
                       </div>
 
-                      {/* Direct Action: Teach on Smart Board */}
+                      {/* Course Syllabus Action */}
                       <button
-                        onClick={() => handleTeachCourse(course)}
-                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold text-xs shadow-md shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+                        onClick={() => setSelectedCourseForModal(course)}
+                        className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-700/80 hover:border-indigo-500/50 font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                       >
-                        <Tv className="w-3.5 h-3.5" />
-                        <span>Teach on Smart Board</span>
+                        <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>View Syllabus & Modules</span>
                       </button>
                     </div>
                   </div>
@@ -414,24 +403,12 @@ export default function TeacherCoursesPage() {
             </div>
 
             {/* Modal Bottom CTA */}
-            <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-end">
               <button
                 onClick={() => setSelectedCourseForModal(null)}
-                className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white"
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
-                Close
-              </button>
-
-              <button
-                onClick={() => {
-                  const course = selectedCourseForModal;
-                  setSelectedCourseForModal(null);
-                  handleTeachCourse(course);
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.02]"
-              >
-                <Tv className="w-3.5 h-3.5" />
-                <span>Launch This Course on Smart Board</span>
+                Close Syllabus
               </button>
             </div>
           </div>

@@ -76,11 +76,7 @@ export default function AuthModal({
         </div>
 
         {/* Reusable Form */}
-        <AuthForm
-          defaultRole={defaultRole}
-          defaultMode={defaultMode}
-          onSuccess={onClose}
-        />
+        <AuthForm onSuccess={onClose} />
       </div>
     </div>
   );

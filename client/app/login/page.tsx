@@ -12,46 +12,37 @@ function LoginContent() {
   const explicitRedirect = searchParams.get("redirect");
   const { isAuthenticated, user } = useAuth();
 
-  // If already authenticated, redirect based on role
+  // If already authenticated, redirect to teacher panel
   React.useEffect(() => {
     if (isAuthenticated && user) {
-      if (explicitRedirect) {
+      if (user.isActive === false || user.isApproved === false) {
+        localStorage.removeItem("inxyme_token");
+        localStorage.removeItem("inxyme_user");
+        return;
+      }
+
+      if (explicitRedirect && !explicitRedirect.includes("learn-board")) {
         router.push(explicitRedirect);
-      } else if (user.role === "INSTRUCTOR" || user.role === "ADMIN") {
-        router.push("/teacher/dashboard");
       } else {
-        router.push("/live/learn-board");
+        router.push("/teacher/dashboard");
       }
     }
   }, [isAuthenticated, user, explicitRedirect, router]);
 
   const handleAuthSuccess = () => {
-    if (explicitRedirect) {
+    if (explicitRedirect && !explicitRedirect.includes("learn-board")) {
       router.push(explicitRedirect);
       return;
     }
-
-    try {
-      const stored = localStorage.getItem("inxyme_user");
-      if (stored) {
-        const u = JSON.parse(stored);
-        if (u.role === "INSTRUCTOR" || u.role === "ADMIN") {
-          router.push("/teacher/dashboard");
-          return;
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    router.push("/live/learn-board");
+    router.push("/teacher/dashboard");
   };
 
   return (
-    <div className="w-full max-w-lg bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+    <div className="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Inxyme Educational Suite</span>
+          <span>Inxyme Faculty LMS Portal</span>
         </div>
       </div>
 
@@ -63,7 +54,7 @@ function LoginContent() {
             className="h-10 sm:h-12 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(79,70,229,0.25)]"
           />
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to Inxyme Smart Board</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to Teacher Panel</h1>
       </div>
 
       <AuthForm onSuccess={handleAuthSuccess} />
@@ -81,7 +72,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center py-10 z-10">
         <Suspense
           fallback={
-            <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center text-slate-400">
+            <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center text-slate-400">
               Loading security portal...
             </div>
           }

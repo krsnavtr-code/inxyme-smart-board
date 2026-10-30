@@ -74,59 +74,18 @@ export default function ProtectedRoute({
 
           <h2 className="text-2xl font-bold text-white tracking-tight">Authentication Required</h2>
           <p className="text-sm text-slate-400 mt-2">
-            Redirecting to login portal... Please sign in as a <span className="text-indigo-400 font-semibold">Teacher</span> or{" "}
-            <span className="text-emerald-400 font-semibold">Student</span> to access the live smart board.
+            Please sign in as a <span className="text-indigo-400 font-semibold">Teacher</span> or{" "}
+            <span className="text-purple-400 font-semibold">Faculty Admin</span> to access the Teacher Panel.
           </p>
 
           <div className="mt-6 space-y-3">
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Sign In to Your Account</span>
-            </button>
-
             <Link
               href="/login"
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 text-slate-400 hover:text-white border border-slate-800 text-xs font-medium flex items-center justify-center gap-2 transition-colors block"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] block"
             >
-              <span>Go to Login Page</span>
+              <LogIn className="w-4 h-4" />
+              <span>Go to Teacher Login</span>
             </Link>
-          </div>
-
-          {/* Quick Demo Instant Bypass */}
-          <div className="mt-6 pt-5 border-t border-slate-800/80">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-2.5">
-              Or Fast Demo Sign In
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                disabled={switching}
-                onClick={async () => {
-                  setSwitching(true);
-                  await switchDemoRole("INSTRUCTOR");
-                  setSwitching(false);
-                }}
-                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 text-left transition-all text-xs font-medium text-slate-300 hover:text-indigo-300 flex items-center gap-2"
-              >
-                <GraduationCap className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span className="truncate">As Teacher</span>
-              </button>
-
-              <button
-                disabled={switching}
-                onClick={async () => {
-                  setSwitching(true);
-                  await switchDemoRole("STUDENT");
-                  setSwitching(false);
-                }}
-                className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition-all text-xs font-medium text-slate-300 hover:text-emerald-300 flex items-center gap-2"
-              >
-                <BookOpen className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="truncate">As Student</span>
-              </button>
-            </div>
           </div>
         </div>
 
@@ -137,7 +96,26 @@ export default function ProtectedRoute({
   }
 
   // 3. Role Authorization Guard (if specific roles are required)
-  if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+  const isRoleAllowed = () => {
+    if (!allowedRoles || allowedRoles.length === 0) return true;
+    const current = String(user.role || "").toUpperCase();
+    return allowedRoles.some((r) => {
+      const target = String(r).toUpperCase();
+      if (current === target) return true;
+      if (
+        (target === "INSTRUCTOR" || target === "ADMIN" || target === "TEACHER") &&
+        (current === "TEACHER" || current === "ADMIN" || current === "INSTRUCTOR")
+      ) {
+        return true;
+      }
+      if (target === "STUDENT" && current === "STUDENT") {
+        return true;
+      }
+      return false;
+    });
+  };
+
+  if (!isRoleAllowed()) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center px-4 font-sans">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center">

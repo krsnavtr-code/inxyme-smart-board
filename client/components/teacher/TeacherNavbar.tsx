@@ -5,13 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
-  Tv,
   LogOut,
   ChevronDown,
   User as UserIcon,
-  ShieldCheck,
-  Radio,
-  ExternalLink
+  ShieldCheck
 } from "lucide-react";
 
 export default function TeacherNavbar() {
@@ -55,17 +52,8 @@ export default function TeacherNavbar() {
         </span>
       </div>
 
-      {/* Right side: Quick Action & User Profile Dropdown */}
+      {/* Right side: User Profile Dropdown */}
       <div className="flex items-center gap-3">
-        {/* Quick Launch Smart Board Button */}
-        <Link
-          href="/live/learn-board"
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.02]"
-        >
-          <Tv className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Launch Board</span>
-        </Link>
-
         {/* User Login Details & Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
@@ -117,23 +105,11 @@ export default function TeacherNavbar() {
                 </div>
               </div>
 
-              {/* Menu Links */}
+              {/* Status info */}
               <div className="space-y-0.5">
-                <Link
-                  href="/live/learn-board"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-                    <span>Live Smart Board Studio</span>
-                  </div>
-                  <ExternalLink className="w-3 h-3 text-slate-500" />
-                </Link>
-
-                <div className="px-3 py-1.5 text-[11px] text-slate-500 flex items-center gap-2">
+                <div className="px-3 py-1.5 text-[11px] text-slate-400 flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Session Protected (JWT)</span>
+                  <span>Faculty Session Active</span>
                 </div>
               </div>
 

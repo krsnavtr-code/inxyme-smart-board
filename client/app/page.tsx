@@ -12,11 +12,7 @@ export default function RootPage() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated && user) {
-        if (user.role === "INSTRUCTOR" || user.role === "ADMIN") {
-          router.replace("/teacher/dashboard");
-        } else {
-          router.replace("/live/learn-board");
-        }
+        router.replace("/teacher/dashboard");
       } else {
         router.replace("/login");
       }

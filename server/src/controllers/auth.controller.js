@@ -26,6 +26,61 @@ exports.login = async (req, res) => {
 
     let user = null;
 
+    // 0. Try finding in inxyme-website first
+    const inxymeUrls = [
+      process.env.INXYME_API_URL || 'http://localhost:4002/api',
+      'http://localhost:4002/api',
+      'https://www.inxyme.com/api'
+    ];
+
+    for (const baseUrl of inxymeUrls) {
+      try {
+        const fetchRes = await fetch(`${baseUrl}/users/lms-users`);
+        if (fetchRes.ok) {
+          const data = await fetchRes.json();
+          const list = data.users || [];
+          const match = list.find((u) => u.email && u.email.toLowerCase() === cleanEmail);
+          if (match) {
+            if (match.isActive === false) {
+              return res.status(403).json({
+                success: false,
+                message: 'Access Denied: Your account has been deactivated (Status: Inactive). Please contact the administrator.'
+              });
+            }
+            if (match.isApproved === false || !match.isApproved) {
+              return res.status(403).json({
+                success: false,
+                message: 'Access Denied: Your LMS access is not approved yet (LMS Status: Not Approved). Please get your account approved in Inxyme Admin.'
+              });
+            }
+
+            const rawRole = String(match.role || '').toLowerCase();
+            const isInst = rawRole === 'teacher' || rawRole === 'instructor' || rawRole === 'admin';
+            if (!isInst) {
+              return res.status(403).json({
+                success: false,
+                message: 'Access Restricted: Only Teachers and Instructors can access the Teacher Panel at this time. Student access is temporarily disabled.'
+              });
+            }
+            user = {
+              id: match._id || match.id,
+              name: match.fullname || match.name || cleanEmail.split('@')[0],
+              email: match.email,
+              role: 'INSTRUCTOR',
+              originalRole: match.role,
+              isActive: true,
+              isApproved: true,
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+              headline: 'Faculty Instructor'
+            };
+            break;
+          }
+        }
+      } catch (e) {
+        // try next
+      }
+    }
+
     // 1. Try finding in DB if pool is available
     try {
       const [rows] = await pool.query('SELECT * FROM users WHERE LOWER(email) = ? LIMIT 1', [cleanEmail]);
@@ -213,4 +268,32 @@ exports.getDemoAccounts = async (req, res) => {
       }
     ]
   });
+};
+
+exports.getLmsUsers = async (req, res) => {
+  try {
+    const inxymeUrls = [
+      process.env.INXYME_API_URL || 'http://localhost:4002/api',
+      'http://localhost:4002/api',
+      'https://www.inxyme.com/api'
+    ];
+
+    for (const baseUrl of inxymeUrls) {
+      try {
+        const fetchRes = await fetch(`${baseUrl}/users/lms-users`);
+        if (fetchRes.ok) {
+          const data = await fetchRes.json();
+          if (data.users && data.users.length > 0) {
+            return res.json({ success: true, users: data.users });
+          }
+        }
+      } catch (e) {
+        // try next
+      }
+    }
+
+    return res.json({ success: false, users: [], message: 'Could not fetch users from Inxyme' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 };
