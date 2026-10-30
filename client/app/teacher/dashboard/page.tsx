@@ -67,7 +67,7 @@ export default function TeacherDashboard() {
                 href="/teacher/courses"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.01]"
               >
-                <span>View Published Courses</span>
+                <span>View Enrolled Courses</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

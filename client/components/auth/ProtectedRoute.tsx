@@ -126,7 +126,7 @@ export default function ProtectedRoute({
           <h2 className="text-xl font-bold text-white">Role Permission Notice</h2>
           <p className="text-sm text-slate-400 mt-2">
             Your account role is <span className="text-amber-400 font-semibold">{user.role}</span>. This specific section requires{" "}
-            <span className="text-indigo-400 font-semibold">{allowedRoles.join(" or ")}</span> privileges.
+            <span className="text-indigo-400 font-semibold">{allowedRoles?.join(" or ") || "Authorized"}</span> privileges.
           </p>
 
           <div className="mt-6 flex flex-col gap-2">

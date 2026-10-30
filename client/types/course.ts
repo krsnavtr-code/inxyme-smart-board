@@ -33,6 +33,12 @@ export interface Course {
   prerequisites?: string[];
   whatYouWillLearn?: string[];
   isPublished: boolean;
+  status?: string;
+  isActive?: boolean;
+  isEnrolled?: boolean;
+  enrollmentStatus?: string;
+  enrolledAt?: string;
+  progress?: number;
   showOnHome?: boolean;
   enrollmentCount?: number;
   slug?: string;

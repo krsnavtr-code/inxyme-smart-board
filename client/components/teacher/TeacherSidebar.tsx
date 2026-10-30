@@ -30,7 +30,7 @@ export default function TeacherSidebar() {
     },
     {
       id: "courses",
-      label: "Published Courses",
+      label: "Enrolled Courses",
       icon: BookOpen,
       href: "/teacher/courses"
     }
