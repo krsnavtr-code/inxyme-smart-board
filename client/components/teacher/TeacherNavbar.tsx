@@ -59,7 +59,7 @@ export default function TeacherNavbar() {
       <div className="flex items-center gap-3">
         {/* Quick Launch Smart Board Button */}
         <Link
-          href="/live/learn-bord"
+          href="/live/learn-board"
           className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.02]"
         >
           <Tv className="w-3.5 h-3.5" />
@@ -89,9 +89,8 @@ export default function TeacherNavbar() {
 
             {/* Dropdown Chevron */}
             <ChevronDown
-              className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                isDropdownOpen ? "rotate-180 text-white" : ""
-              }`}
+              className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-white" : ""
+                }`}
             />
           </button>
 
@@ -121,7 +120,7 @@ export default function TeacherNavbar() {
               {/* Menu Links */}
               <div className="space-y-0.5">
                 <Link
-                  href="/live/learn-bord"
+                  href="/live/learn-board"
                   onClick={() => setIsDropdownOpen(false)}
                   className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
                 >

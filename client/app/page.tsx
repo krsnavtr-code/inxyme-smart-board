@@ -15,7 +15,7 @@ export default function RootPage() {
         if (user.role === "INSTRUCTOR" || user.role === "ADMIN") {
           router.replace("/teacher/dashboard");
         } else {
-          router.replace("/live/learn-bord");
+          router.replace("/live/learn-board");
         }
       } else {
         router.replace("/login");

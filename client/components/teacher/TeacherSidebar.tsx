@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
+  BookOpen,
   Tv,
   LogOut,
   ChevronLeft,
@@ -29,10 +30,16 @@ export default function TeacherSidebar() {
       href: "/teacher/dashboard"
     },
     {
+      id: "courses",
+      label: "Published Courses",
+      icon: BookOpen,
+      href: "/teacher/courses"
+    },
+    {
       id: "live-board",
       label: "Smart Board",
       icon: Tv,
-      href: "/live/learn-bord"
+      href: "/live/learn-board"
     }
   ];
 
@@ -57,9 +64,8 @@ export default function TeacherSidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transition-all duration-300 ${
-          isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"
-        } ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
+        className={`fixed top-0 bottom-0 left-0 z-40 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transition-all duration-300 ${isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"
+          } ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
       >
         {/* Top Section */}
         <div className="flex flex-col">
@@ -125,17 +131,15 @@ export default function TeacherSidebar() {
                   key={item.id}
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group relative ${
-                    isActive
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group relative ${isActive
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                       : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/80"
-                  }`}
+                    }`}
                   title={isCollapsed ? item.label : undefined}
                 >
                   <Icon
-                    className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
-                      isActive ? "text-white" : "text-slate-400 group-hover:text-indigo-400"
-                    }`}
+                    className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-indigo-400"
+                      }`}
                   />
                   {!isCollapsed && <span className="truncate">{item.label}</span>}
 
@@ -155,10 +159,9 @@ export default function TeacherSidebar() {
         <div className="p-3 border-t border-slate-800/80 space-y-2">
           {/* Quick Smart Board CTA */}
           <Link
-            href="/live/learn-bord"
-            className={`w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-xs shadow-md shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] ${
-              isCollapsed ? "p-2.5" : ""
-            }`}
+            href="/live/learn-board"
+            className={`w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-xs shadow-md shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] ${isCollapsed ? "p-2.5" : ""
+              }`}
             title="Open Smart Board"
           >
             <Tv className="w-4 h-4 shrink-0" />
@@ -168,9 +171,8 @@ export default function TeacherSidebar() {
           {/* Logout Action */}
           <button
             onClick={logout}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors ${
-              isCollapsed ? "justify-center" : ""
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors ${isCollapsed ? "justify-center" : ""
+              }`}
             title="Sign out"
           >
             <LogOut className="w-4 h-4 shrink-0" />

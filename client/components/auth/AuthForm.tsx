@@ -141,11 +141,10 @@ export default function AuthForm({
             setErrorMsg(null);
             setSuccessMsg(null);
           }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-            mode === "login"
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${mode === "login"
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
               : "text-slate-400 hover:text-slate-200"
-          }`}
+            }`}
         >
           <LogIn className="w-3.5 h-3.5" />
           <span>Sign In</span>
@@ -158,11 +157,10 @@ export default function AuthForm({
             setErrorMsg(null);
             setSuccessMsg(null);
           }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-            mode === "register"
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${mode === "register"
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
               : "text-slate-400 hover:text-slate-200"
-          }`}
+            }`}
         >
           <UserPlus className="w-3.5 h-3.5" />
           <span>Create Account</span>
@@ -295,7 +293,7 @@ export default function AuthForm({
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <span>{mode === "login" ? "Sign In to LMS" : `Create ${role === "INSTRUCTOR" ? "Teacher" : "Student"} Account`}</span>
+              <span>{mode === "login" ? "Sign In to Smart Board" : `Create ${role === "INSTRUCTOR" ? "Teacher" : "Student"} Account`}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </>
           )}
@@ -303,7 +301,7 @@ export default function AuthForm({
       </form>
 
       {/* 1-Click Fast Demo Credentials (In Login Mode) */}
-      {mode === "login" && (
+      {/* {mode === "login" && (
         <div className="mt-6 pt-5 border-t border-slate-800/80">
           <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2.5">
             <Laptop className="w-3 h-3 text-indigo-400" />
@@ -336,7 +334,7 @@ export default function AuthForm({
             ))}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

@@ -20,7 +20,7 @@ function LoginContent() {
       } else if (user.role === "INSTRUCTOR" || user.role === "ADMIN") {
         router.push("/teacher/dashboard");
       } else {
-        router.push("/live/learn-bord");
+        router.push("/live/learn-board");
       }
     }
   }, [isAuthenticated, user, explicitRedirect, router]);
@@ -43,7 +43,7 @@ function LoginContent() {
     } catch (e) {
       console.error(e);
     }
-    router.push("/live/learn-bord");
+    router.push("/live/learn-board");
   };
 
   return (
@@ -53,10 +53,6 @@ function LoginContent() {
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>Inxyme Educational Suite</span>
         </div>
-
-        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-          Inxyme Security Gateway
-        </span>
       </div>
 
       <div className="text-center mb-6">
@@ -67,10 +63,7 @@ function LoginContent() {
             className="h-10 sm:h-12 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(79,70,229,0.25)]"
           />
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to Smart Learning</h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Access high-concurrency smart boards and synchronous lecture sessions
-        </p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to Inxyme Smart Board</h1>
       </div>
 
       <AuthForm onSuccess={handleAuthSuccess} />

@@ -22,7 +22,7 @@ export default function TeacherDashboard() {
   const handleLaunchBoard = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!roomCode.trim()) return;
-    router.push(`/live/learn-bord?room=${encodeURIComponent(roomCode.trim().toUpperCase())}`);
+    router.push(`/live/learn-board?room=${encodeURIComponent(roomCode.trim().toUpperCase())}`);
   };
 
   return (

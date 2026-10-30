@@ -39,7 +39,8 @@ import {
   Layers,
   ArrowRight,
   Home,
-  LogOut
+  LogOut,
+  GraduationCap
 } from "lucide-react";
 
 interface Stroke {
