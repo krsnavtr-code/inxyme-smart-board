@@ -48,16 +48,42 @@ export default function TeacherDashboard() {
         </section>
 
         {/* Faculty Panel Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Batches Card */}
+          <div className="bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 rounded-3xl p-6 shadow-xl flex flex-col justify-between transition-all">
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                <Layers className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white">My Live Batches</h2>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  View your assigned cohorts, access live Zoom/Meet class links, check student rosters, and track schedules.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-6">
+              <Link
+                href="/teacher/batches"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.01]"
+              >
+                <span>View My Batches</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Courses Card */}
+          <div className="bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 rounded-3xl p-6 shadow-xl flex flex-col justify-between transition-all">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">Course Curriculum & Syllabus</h2>
+                <h2 className="text-base font-bold text-white">Course Curriculum</h2>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Browse published academic courses, view syllabus outlines, chapter breakdowns, and course skill requirements.
+                  Browse enrolled courses, detailed syllabus outlines, session breakdowns, sprints, and learning outcomes.
                 </p>
               </div>
             </div>
@@ -65,14 +91,15 @@ export default function TeacherDashboard() {
             <div className="pt-6">
               <Link
                 href="/teacher/courses"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.01]"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs border border-slate-700 transition-all hover:scale-[1.01]"
               >
-                <span>View Enrolled Courses</span>
+                <span>Browse Syllabus</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
 
+          {/* Status Card */}
           <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">

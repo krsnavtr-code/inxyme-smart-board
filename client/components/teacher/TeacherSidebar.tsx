@@ -7,6 +7,8 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   BookOpen,
+  Layers,
+  Users,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -27,6 +29,12 @@ export default function TeacherSidebar() {
       label: "Dashboard",
       icon: LayoutDashboard,
       href: "/teacher/dashboard"
+    },
+    {
+      id: "batches",
+      label: "My Batches",
+      icon: Layers,
+      href: "/teacher/batches"
     },
     {
       id: "courses",
