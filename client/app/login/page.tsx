@@ -12,7 +12,7 @@ function LoginContent() {
   const explicitRedirect = searchParams.get("redirect");
   const { isAuthenticated, user } = useAuth();
 
-  // If already authenticated, redirect to teacher panel
+  // If already authenticated, redirect based on role
   React.useEffect(() => {
     if (isAuthenticated && user) {
       if (user.isActive === false || user.isApproved === false) {
@@ -21,20 +21,47 @@ function LoginContent() {
         return;
       }
 
-      if (explicitRedirect && !explicitRedirect.includes("learn-board")) {
-        router.push(explicitRedirect);
+      const isStudent =
+        user.role === "STUDENT" ||
+        user.role === "student" ||
+        user.originalRole === "student";
+
+      if (isStudent) {
+        if (explicitRedirect && !explicitRedirect.startsWith("/teacher")) {
+          router.push(explicitRedirect);
+          return;
+        }
+        router.push("/student/dashboard");
       } else {
+        if (explicitRedirect && !explicitRedirect.startsWith("/student")) {
+          router.push(explicitRedirect);
+          return;
+        }
         router.push("/teacher/dashboard");
       }
     }
   }, [isAuthenticated, user, explicitRedirect, router]);
 
-  const handleAuthSuccess = () => {
-    if (explicitRedirect && !explicitRedirect.includes("learn-board")) {
-      router.push(explicitRedirect);
-      return;
+  const handleAuthSuccess = (loggedUser?: any) => {
+    const targetUser = loggedUser || user;
+    const isStudent =
+      targetUser?.role === "STUDENT" ||
+      targetUser?.role === "student" ||
+      targetUser?.originalRole === "student";
+
+    if (isStudent) {
+      if (explicitRedirect && !explicitRedirect.startsWith("/teacher")) {
+        router.push(explicitRedirect);
+        return;
+      }
+      router.push("/student/dashboard");
+    } else {
+      if (explicitRedirect && !explicitRedirect.startsWith("/student")) {
+        router.push(explicitRedirect);
+        return;
+      }
+      router.push("/teacher/dashboard");
     }
-    router.push("/teacher/dashboard");
   };
 
   return (
@@ -42,7 +69,7 @@ function LoginContent() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Inxyme Faculty LMS Portal</span>
+          <span>Inxyme LMS Portal</span>
         </div>
       </div>
 
@@ -54,7 +81,7 @@ function LoginContent() {
             className="h-10 sm:h-12 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(79,70,229,0.25)]"
           />
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to Teacher Panel</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Sign In to LMS</h1>
       </div>
 
       <AuthForm onSuccess={handleAuthSuccess} />

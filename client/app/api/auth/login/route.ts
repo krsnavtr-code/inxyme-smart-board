@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           message:
-            "User not found in Inxyme Website database. Please verify your email address.",
+            "User not found. Please check your email and password.",
         },
         { status: 404 }
       );
@@ -139,27 +139,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Role Verification for Teacher Panel
-    // Only Teachers and Instructors can access the Teacher Panel
+    // 5. Role Mapping (Supports both Teachers and Students)
     const rawRole = String(user.role || "").toLowerCase();
     const isTeacherOrAdmin =
       rawRole === "teacher" ||
       rawRole === "instructor" ||
-      rawRole === "admin";
+      rawRole === "admin" ||
+      rawRole === "employee";
 
-    if (!isTeacherOrAdmin) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Access Restricted: Only Teachers and Instructors can access the Teacher Panel at this time. Student access is temporarily disabled.",
-          role: user.role,
-        },
-        { status: 403 }
-      );
-    }
-
-    const mappedRole = "INSTRUCTOR";
+    const mappedRole = isTeacherOrAdmin ? "INSTRUCTOR" : "STUDENT";
 
     const formattedUser = {
       id: user._id || user.id || `user_${Date.now()}`,

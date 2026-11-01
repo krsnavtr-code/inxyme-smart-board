@@ -40,6 +40,24 @@ export default function ProtectedRoute({
     }
   }, [isLoading, isAuthenticated, router, redirectTo]);
 
+  // Auto redirect role mismatch to appropriate portal
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user && allowedRoles && allowedRoles.length > 0) {
+      const currentRole = String(user.role || "").toUpperCase();
+      const isStudent = currentRole === "STUDENT" || user.originalRole === "student";
+      const isTeacher = currentRole === "INSTRUCTOR" || currentRole === "ADMIN" || currentRole === "TEACHER";
+
+      // If student lands on a teacher-only page, seamlessly redirect to student portal
+      if (isStudent && !allowedRoles.includes("STUDENT")) {
+        router.replace("/student/dashboard");
+      }
+      // If teacher lands on a student-only page, seamlessly redirect to teacher portal
+      else if (isTeacher && allowedRoles.includes("STUDENT") && !allowedRoles.includes("INSTRUCTOR") && !allowedRoles.includes("ADMIN")) {
+        router.replace("/teacher/dashboard");
+      }
+    }
+  }, [isLoading, isAuthenticated, user, allowedRoles, router]);
+
   // 1. Loading State Skeleton
   if (isLoading) {
     return (
@@ -130,12 +148,23 @@ export default function ProtectedRoute({
           </p>
 
           <div className="mt-6 flex flex-col gap-2">
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors"
-            >
-              Switch to an Authorized Role
-            </button>
+            {String(user.role).toUpperCase() === "STUDENT" ? (
+              <Link
+                href="/student/dashboard"
+                className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>Go to Student Portal</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            ) : (
+              <Link
+                href="/teacher/dashboard"
+                className="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>Go to Teacher Portal</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
             <Link
               href="/login"
               className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"

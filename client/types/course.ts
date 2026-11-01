@@ -77,6 +77,7 @@ export interface Course {
   skills?: string[];
   prerequisites?: string[];
   whatYouWillLearn?: string[];
+  highlights?: string[];
   isPublished: boolean;
   status?: string;
   isActive?: boolean;
