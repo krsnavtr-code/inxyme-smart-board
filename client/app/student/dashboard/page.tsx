@@ -133,19 +133,46 @@ export default function StudentDashboardPage() {
         </section>
 
         {/* Quick Action Tiles */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Batches & Live Classes */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Learning Sprints Flow */}
           <div className="bg-slate-900/60 border border-slate-800 hover:border-emerald-500/40 rounded-3xl p-6 shadow-xl flex flex-col justify-between transition-all group">
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <Layers className="w-5 h-5" />
+                <Sparkles className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  Learning Sprints
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Sprint sequence &rarr; sessions &rarr; tasks complete trajectory with recorded lectures and quizzes.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-6">
+              <Link
+                href="/student/sprints"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/30 transition-all hover:scale-[1.01]"
+              >
+                <span>Launch Sprints</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Batches & Live Classes */}
+          <div className="bg-slate-900/60 border border-slate-800 hover:border-blue-500/40 rounded-3xl p-6 shadow-xl flex flex-col justify-between transition-all group">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                <Layers className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors">
                   My Live Batches
                 </h2>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  View your allocated cohorts, check live meeting links, schedule timings, and connect with your instructor.
+                  View your allocated cohorts, check live meeting links, schedule timings, and connect with faculty.
                 </p>
               </div>
             </div>
@@ -153,7 +180,7 @@ export default function StudentDashboardPage() {
             <div className="pt-6">
               <Link
                 href="/student/batches"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/30 transition-all hover:scale-[1.01]"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md shadow-blue-600/30 transition-all hover:scale-[1.01]"
               >
                 <span>View Batches ({batches.length})</span>
                 <ArrowRight className="w-3.5 h-3.5" />

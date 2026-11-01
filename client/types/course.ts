@@ -11,6 +11,33 @@ export interface CurriculumTopic {
   duration?: string;
 }
 
+export interface LmsQuestionOption {
+  text: string;
+  isCorrect?: boolean;
+  matchTo?: string;
+}
+
+export interface LmsQuestion {
+  _id?: string;
+  questionType: string;
+  question: string;
+  points?: number;
+  options?: LmsQuestionOption[];
+  correctAnswer?: string;
+  explanation?: string;
+  order?: number;
+}
+
+export interface LmsSubmission {
+  _id?: string;
+  user: string;
+  session?: string;
+  answers?: any;
+  score?: number;
+  timeSpent?: number;
+  submittedAt?: string;
+}
+
 export interface LmsTask {
   _id?: string;
   title: string;
@@ -19,6 +46,10 @@ export interface LmsTask {
   dueDate?: string;
   points?: number;
   status?: string;
+  sessionId?: string;
+  questions?: LmsQuestion[];
+  submissions?: LmsSubmission[];
+  order?: number;
 }
 
 export interface LmsSessionResource {

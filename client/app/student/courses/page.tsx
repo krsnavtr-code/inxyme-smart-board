@@ -215,14 +215,21 @@ export default function StudentCoursesPage() {
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-slate-800/80 mt-6 flex items-center gap-2">
+                  <div className="pt-6 border-t border-slate-800/80 mt-6 grid grid-cols-2 gap-2">
                     <button
                       onClick={() => openSyllabusModal(course)}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition-all cursor-pointer"
                     >
-                      <BookOpen className="w-3.5 h-3.5" />
-                      <span>View Full Syllabus</span>
+                      <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Syllabus</span>
                     </button>
+                    <Link
+                      href={`/student/sprints?courseId=${course._id}`}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Sprint Flow</span>
+                    </Link>
                   </div>
                 </div>
               );
@@ -334,7 +341,22 @@ export default function StudentCoursesPage() {
               )}
 
               {syllabusTab === "sprints" && (
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                    <div>
+                      <p className="text-xs font-bold text-white">Sprint & Session Sequence</p>
+                      <p className="text-[11px] text-slate-400">Chronological learning trajectory with lectures and tasks</p>
+                    </div>
+                    <Link
+                      href={`/student/sprints?courseId=${selectedCourseForModal._id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Launch Sprints Flow</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+
                   {sprintsLoading ? (
                     <div className="py-12 text-center text-xs text-slate-400">Loading sprints...</div>
                   ) : sprints.length > 0 ? (

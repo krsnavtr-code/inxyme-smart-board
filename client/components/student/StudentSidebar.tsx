@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Menu,
   X,
-  GraduationCap
+  GraduationCap,
+  Sparkles
 } from "lucide-react";
 
 export default function StudentSidebar() {
@@ -32,6 +33,12 @@ export default function StudentSidebar() {
       href: "/student/dashboard"
     },
     {
+      id: "sprints",
+      label: "Learning Sprints",
+      icon: Sparkles,
+      href: "/student/sprints"
+    },
+    {
       id: "batches",
       label: "My Batches",
       icon: Layers,
@@ -43,12 +50,6 @@ export default function StudentSidebar() {
       icon: BookOpen,
       href: "/student/courses"
     },
-    {
-      id: "learn-board",
-      label: "Live Classroom",
-      icon: Radio,
-      href: "/live/learn-board"
-    }
   ];
 
   return (
@@ -72,9 +73,8 @@ export default function StudentSidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transition-all duration-300 ${
-          isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"
-        } ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
+        className={`fixed top-0 bottom-0 left-0 z-40 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transition-all duration-300 ${isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"
+          } ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
       >
         {/* Top Section */}
         <div className="flex flex-col">
@@ -140,17 +140,15 @@ export default function StudentSidebar() {
                   key={item.id}
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group relative ${
-                    isActive
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group relative ${isActive
                       ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/30"
                       : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/80"
-                  }`}
+                    }`}
                   title={isCollapsed ? item.label : undefined}
                 >
                   <Icon
-                    className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
-                      isActive ? "text-white" : "text-slate-400 group-hover:text-emerald-400"
-                    }`}
+                    className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-emerald-400"
+                      }`}
                   />
                   {!isCollapsed && <span className="truncate">{item.label}</span>}
 
@@ -169,9 +167,8 @@ export default function StudentSidebar() {
         <div className="p-3 border-t border-slate-800/80">
           <button
             onClick={logout}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer ${
-              isCollapsed ? "justify-center" : ""
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer ${isCollapsed ? "justify-center" : ""
+              }`}
             title="Sign out"
           >
             <LogOut className="w-4 h-4 shrink-0" />
