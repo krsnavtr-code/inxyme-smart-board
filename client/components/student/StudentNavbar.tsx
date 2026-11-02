@@ -7,14 +7,9 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LogOut,
   ChevronDown,
-  User as UserIcon,
-  GraduationCap,
-  Sparkles,
   BookOpen,
   Layers,
-  Radio,
-  Gift,
-  Briefcase
+  Radio
 } from "lucide-react";
 
 export default function StudentNavbar() {
@@ -55,55 +50,6 @@ export default function StudentNavbar() {
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           Inxyme LMS
         </span>
-      </div>
-
-      {/* Center Quick Navigation */}
-      <div className="hidden md:flex items-center gap-1 bg-slate-900/60 border border-slate-800/80 rounded-xl p-1 text-xs">
-        <Link
-          href="/student/dashboard"
-          className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/student/sprints"
-          className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-        >
-          Sprints Flow
-        </Link>
-        <Link
-          href="/student/batches"
-          className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-        >
-          My Batches
-        </Link>
-        <Link
-          href="/student/courses"
-          className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-        >
-          Courses
-        </Link>
-        <Link
-          href="/student/career"
-          className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-1 font-semibold"
-        >
-          <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Careers</span>
-        </Link>
-        <Link
-          href="/student/refer"
-          className="px-3 py-1.5 rounded-lg text-emerald-400 hover:text-white hover:bg-emerald-600/20 transition-colors flex items-center gap-1 font-semibold"
-        >
-          <Gift className="w-3.5 h-3.5" />
-          <span>Refer &amp; Earn</span>
-        </Link>
-        <Link
-          href="/live/learn-board"
-          className="px-3 py-1.5 rounded-lg bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-1 font-semibold"
-        >
-          <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-          <span>Live Class</span>
-        </Link>
       </div>
 
       {/* Right side: User Profile Dropdown */}

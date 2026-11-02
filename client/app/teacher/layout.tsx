@@ -1,23 +1,47 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import TeacherSidebar from "@/components/teacher/TeacherSidebar";
 import TeacherNavbar from "@/components/teacher/TeacherNavbar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function TeacherLayout({
-  children
+  children,
 }: {
   children: React.ReactNode;
 }) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("teacher_sidebar_collapsed");
+    if (saved !== null) {
+      setIsCollapsed(saved === "true");
+    }
+  }, []);
+
+  const handleToggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("teacher_sidebar_collapsed", String(next));
+      return next;
+    });
+  };
+
   return (
     <ProtectedRoute allowedRoles={["INSTRUCTOR", "ADMIN"]} redirectTo="/login">
       <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans selection:bg-indigo-600 selection:text-white">
         {/* Left Sidebar */}
-        <TeacherSidebar />
+        <TeacherSidebar
+          isCollapsed={isCollapsed}
+          onToggleCollapse={handleToggleCollapse}
+        />
 
-        {/* Right Main Content Area with responsive margin matching sidebar width */}
-        <div className="flex-1 flex flex-col min-w-0 lg:pl-64 transition-all duration-300">
+        {/* Right Main Content Area with dynamic responsive padding matching sidebar width */}
+        <div
+          className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${
+            isCollapsed ? "lg:pl-16" : "lg:pl-64"
+          }`}
+        >
           {/* Top LMS Navbar with Login Details & Dropdown on the Right */}
           <TeacherNavbar />
 

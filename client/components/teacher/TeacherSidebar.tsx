@@ -16,12 +16,31 @@ import {
   X
 } from "lucide-react";
 
-export default function TeacherSidebar() {
+interface TeacherSidebarProps {
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export default function TeacherSidebar({
+  isCollapsed: controlledCollapsed,
+  onToggleCollapse,
+}: TeacherSidebarProps = {}) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const isCollapsed =
+    controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
+
+  const handleToggle = () => {
+    if (onToggleCollapse) {
+      onToggleCollapse();
+    } else {
+      setInternalCollapsed(!internalCollapsed);
+    }
+  };
 
   const navItems = [
     {
@@ -66,32 +85,34 @@ export default function TeacherSidebar() {
       {/* Sidebar */}
       <aside
         className={`fixed top-0 bottom-0 left-0 z-40 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transition-all duration-300 ${isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"
-          } ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
+          } ${isCollapsed ? "lg:w-16" : "lg:w-64"}`}
       >
         {/* Top Section */}
         <div className="flex flex-col">
           {/* Logo & Brand Header */}
-          <div className="h-16 border-b border-slate-800/80 px-4 flex items-center justify-between">
-            <Link
-              href="/teacher/dashboard"
-              className="flex items-center gap-3 overflow-hidden group"
-              onClick={() => setIsMobileOpen(false)}
-            >
-              <img
-                src="https://www.inxyme.com/api/upload/file/Inxyme-png-logo-2232.png"
-                alt="Inxyme Logo"
-                className="h-8 w-auto object-contain shrink-0"
-              />
-            </Link>
+          <div className={`h-16 border-b border-slate-800/80 flex items-center transition-all ${isCollapsed ? "justify-center px-1" : "justify-between px-4"}`}>
+            {!isCollapsed && (
+              <Link
+                href="/teacher/dashboard"
+                className="flex items-center gap-3 overflow-hidden group"
+                onClick={() => setIsMobileOpen(false)}
+              >
+                <img
+                  src="https://www.inxyme.com/api/upload/file/Inxyme-png-logo-2232.png"
+                  alt="Inxyme Logo"
+                  className="h-8 w-auto object-contain shrink-0"
+                />
+              </Link>
+            )}
 
             {/* Collapse / Expand Toggle Button */}
             <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:flex p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-900 transition-colors"
+              onClick={handleToggle}
+              className={`hidden lg:flex rounded-xl text-slate-500 hover:text-slate-200 hover:bg-slate-900 transition-colors cursor-pointer ${isCollapsed ? "p-2" : "p-1.5"}`}
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               {isCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-5 h-5 text-indigo-400" />
               ) : (
                 <ChevronLeft className="w-4 h-4" />
               )}
@@ -99,10 +120,10 @@ export default function TeacherSidebar() {
           </div>
 
           {/* Teacher Profile Widget */}
-          <div className="p-3 border-b border-slate-800/80">
-            <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-2.5 flex items-center gap-3">
+          <div className={`border-b border-slate-800/80 transition-all ${isCollapsed ? "p-1.5 flex justify-center" : "p-3"}`}>
+            <div className={`bg-slate-900/80 border border-slate-800/90 rounded-2xl flex items-center transition-all ${isCollapsed ? "p-1.5 justify-center" : "p-2.5 gap-3"}`}>
               <div className="relative shrink-0">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center font-bold text-xs text-white shadow-md">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center font-bold text-xs text-white shadow-md">
                   {user?.name ? user.name.charAt(0) : "T"}
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900" />
@@ -122,7 +143,7 @@ export default function TeacherSidebar() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-2.5 space-y-1">
+          <nav className={`transition-all ${isCollapsed ? "p-1.5 space-y-1.5" : "p-2.5 space-y-1"}`}>
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -132,7 +153,9 @@ export default function TeacherSidebar() {
                   key={item.id}
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group relative ${isActive
+                  className={`flex items-center rounded-xl text-xs font-semibold transition-all group relative ${
+                    isCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5"
+                  } ${isActive
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                       : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/80"
                     }`}
@@ -146,7 +169,7 @@ export default function TeacherSidebar() {
 
                   {/* Tooltip on collapsed state */}
                   {isCollapsed && (
-                    <div className="hidden lg:group-hover:flex absolute left-full ml-2 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-medium whitespace-nowrap shadow-xl z-50">
+                    <div className="hidden lg:group-hover:flex absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-medium whitespace-nowrap shadow-xl z-50">
                       {item.label}
                     </div>
                   )}
@@ -157,11 +180,12 @@ export default function TeacherSidebar() {
         </div>
 
         {/* Bottom Section: Logout Action */}
-        <div className="p-3 border-t border-slate-800/80">
+        <div className={`border-t border-slate-800/80 transition-all ${isCollapsed ? "p-1.5 flex justify-center" : "p-3"}`}>
           <button
             onClick={logout}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors ${isCollapsed ? "justify-center" : ""
-              }`}
+            className={`w-full flex items-center rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer ${
+              isCollapsed ? "justify-center p-2.5" : "gap-2.5 px-3 py-2"
+            }`}
             title="Sign out"
           >
             <LogOut className="w-4 h-4 shrink-0" />
