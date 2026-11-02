@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, email, fullname, phone, address, upiId, department } = body;
+    const { userId, email, fullname, phone, address, upiId, department, designation, resumeUrl, resumeName } = body;
 
     if (!userId && !email) {
       return NextResponse.json(
@@ -115,6 +115,9 @@ export async function PUT(req: NextRequest) {
             address,
             upiId,
             department,
+            designation,
+            resumeUrl,
+            resumeName,
           }),
         });
 

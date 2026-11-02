@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -26,7 +26,13 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronRight,
-  Gift
+  Gift,
+  FileText,
+  UploadCloud,
+  Eye,
+  Trash2,
+  RefreshCw,
+  Download
 } from "lucide-react";
 
 interface EnrolledCourse {
@@ -64,6 +70,9 @@ interface ProfileData {
   isActive: boolean;
   isApproved: boolean;
   createdAt?: string;
+  resumeUrl?: string;
+  resumeName?: string;
+  resumeUpdatedAt?: string;
   enrolledCourses: EnrolledCourse[];
   enrolledBatches: EnrolledBatch[];
 }
@@ -71,6 +80,7 @@ interface ProfileData {
 export default function StudentProfilePage() {
   const router = useRouter();
   const { user, updateUser, isAuthenticated } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -80,6 +90,10 @@ export default function StudentProfilePage() {
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  // Resume Upload State
+  const [uploadingResume, setUploadingResume] = useState<boolean>(false);
+  const [resumeError, setResumeError] = useState<string>("");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -120,6 +134,9 @@ export default function StudentProfilePage() {
           isActive: p.isActive !== false,
           isApproved: p.isApproved !== false,
           createdAt: p.createdAt,
+          resumeUrl: p.resumeUrl || user.resumeUrl || "",
+          resumeName: p.resumeName || user.resumeName || "",
+          resumeUpdatedAt: p.resumeUpdatedAt || user.resumeUpdatedAt || "",
           enrolledCourses: p.enrolledCourses || [],
           enrolledBatches: p.enrolledBatches || [],
         };
@@ -149,6 +166,9 @@ export default function StudentProfilePage() {
           role: "student",
           isActive: true,
           isApproved: true,
+          resumeUrl: user.resumeUrl || "",
+          resumeName: user.resumeName || "",
+          resumeUpdatedAt: user.resumeUpdatedAt || "",
           enrolledCourses: [],
           enrolledBatches: [],
         };
@@ -244,6 +264,133 @@ export default function StudentProfilePage() {
       setErrorMessage(err.message || "Failed to update profile. Please try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Handle Resume PDF Upload
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate PDF
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+
+    if (!isPdf) {
+      setResumeError("Invalid format: Only PDF documents (.pdf) are allowed.");
+      return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      setResumeError("File size exceeds 15MB limit. Please upload a smaller PDF.");
+      return;
+    }
+
+    setUploadingResume(true);
+    setResumeError("");
+    setSuccessMessage("");
+
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("userId", user.id || profile?._id || "");
+      uploadData.append("email", user.email || "");
+
+      const res = await fetch("/api/student/resume", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setSuccessMessage("Resume PDF uploaded successfully!");
+        const updatedResumeUrl = data.resumeUrl;
+        const updatedResumeName = data.resumeName || file.name;
+        const updatedResumeTime = data.resumeUpdatedAt || new Date().toISOString();
+
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                resumeUrl: updatedResumeUrl,
+                resumeName: updatedResumeName,
+                resumeUpdatedAt: updatedResumeTime,
+              }
+            : null
+        );
+
+        updateUser({
+          resumeUrl: updatedResumeUrl,
+          resumeName: updatedResumeName,
+          resumeUpdatedAt: updatedResumeTime,
+        });
+
+        setTimeout(() => setSuccessMessage(""), 5000);
+      } else {
+        throw new Error(data.message || "Failed to upload resume PDF.");
+      }
+    } catch (err: any) {
+      console.error("Resume upload error:", err);
+      setResumeError(err.message || "Could not upload resume PDF.");
+    } finally {
+      setUploadingResume(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // Handle Remove Resume
+  const handleRemoveResume = async () => {
+    if (!user) return;
+    if (!window.confirm("Are you sure you want to remove your resume PDF?")) {
+      return;
+    }
+
+    setUploadingResume(true);
+    setResumeError("");
+    setSuccessMessage("");
+
+    try {
+      const q = new URLSearchParams();
+      if (user.id) q.set("userId", user.id);
+      if (user.email) q.set("email", user.email);
+
+      const res = await fetch(`/api/student/resume?${q.toString()}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccessMessage("Resume removed successfully.");
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                resumeUrl: "",
+                resumeName: "",
+                resumeUpdatedAt: "",
+              }
+            : null
+        );
+
+        updateUser({
+          resumeUrl: "",
+          resumeName: "",
+          resumeUpdatedAt: "",
+        });
+
+        setTimeout(() => setSuccessMessage(""), 5000);
+      } else {
+        throw new Error(data.message || "Failed to remove resume.");
+      }
+    } catch (err: any) {
+      console.error("Resume remove error:", err);
+      setResumeError(err.message || "Could not remove resume.");
+    } finally {
+      setUploadingResume(false);
     }
   };
 
@@ -368,6 +515,12 @@ export default function StudentProfilePage() {
                   <ShieldCheck className="w-3.5 h-3.5" />
                   Verified Student
                 </span>
+                {profile?.resumeUrl && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold">
+                    <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                    Resume Attached
+                  </span>
+                )}
               </div>
 
               <p className="text-slate-400 text-xs sm:text-sm flex items-center gap-2">
@@ -416,8 +569,155 @@ export default function StudentProfilePage() {
 
       {/* Main Grid: Details Form & Quick Links */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 Cols): Personal & Contact Information */}
+        {/* Left Column (2 Cols): Personal Details & Resume Upload */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Resume PDF Upload Section */}
+          <div className="bg-slate-900/90 border border-slate-800/90 rounded-3xl p-6 sm:p-7 shadow-xl space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-rose-400" />
+                  Resume (PDF)
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Upload your updated resume PDF for job referrals, internships and career services.
+                </p>
+              </div>
+
+              {profile?.resumeUrl ? (
+                <span className="self-start sm:self-auto text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Resume Linked
+                </span>
+              ) : (
+                <span className="self-start sm:self-auto text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  No Resume
+                </span>
+              )}
+            </div>
+
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="application/pdf,.pdf"
+              onChange={handleResumeUpload}
+              className="hidden"
+            />
+
+            {/* Resume Upload Error */}
+            {resumeError && (
+              <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{resumeError}</span>
+              </div>
+            )}
+
+            {profile?.resumeUrl ? (
+              /* Already Uploaded Resume Box */
+              <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-slate-700/80 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0 shadow-md">
+                    <FileText className="w-6 h-6 text-rose-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-white truncate">
+                        {profile.resumeName || "My_Resume.pdf"}
+                      </h4>
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30">
+                        PDF
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
+                      <Clock className="w-3 h-3 text-slate-500" />
+                      <span>
+                        {profile.resumeUpdatedAt
+                          ? `Last updated: ${new Date(profile.resumeUpdatedAt).toLocaleDateString("en-IN", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })}`
+                          : "Active Resume File"}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
+                  {/* View/Open Resume Button */}
+                  <a
+                    href={profile.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold transition-all border border-slate-700/80 cursor-pointer shadow-sm"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-blue-400" />
+                    <span>View PDF</span>
+                  </a>
+
+                  {/* Replace/Update Resume Button */}
+                  <button
+                    type="button"
+                    disabled={uploadingResume}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-indigo-200 text-xs font-semibold transition-all border border-indigo-500/30 cursor-pointer disabled:opacity-50"
+                  >
+                    {uploadingResume ? (
+                      <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    )}
+                    <span>Replace</span>
+                  </button>
+
+                  {/* Remove Resume Button */}
+                  <button
+                    type="button"
+                    disabled={uploadingResume}
+                    onClick={handleRemoveResume}
+                    className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 text-xs font-semibold transition-all border border-rose-500/20 cursor-pointer disabled:opacity-50"
+                    title="Remove Resume"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Drag & Drop / Click to Upload Box */
+              <div
+                onClick={() => !uploadingResume && fileInputRef.current?.click()}
+                className={`group border-2 border-dashed rounded-2xl p-7 text-center transition-all cursor-pointer ${
+                  uploadingResume
+                    ? "border-emerald-500/50 bg-emerald-500/5 cursor-wait"
+                    : "border-slate-800 hover:border-emerald-500/50 hover:bg-slate-950/60 bg-slate-950/30"
+                }`}
+              >
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-3.5 group-hover:scale-110 transition-transform shadow-lg">
+                  {uploadingResume ? (
+                    <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <UploadCloud className="w-7 h-7" />
+                  )}
+                </div>
+
+                <h4 className="text-sm font-bold text-white mb-1">
+                  {uploadingResume ? "Uploading your Resume PDF..." : "Click to Upload Resume (PDF only)"}
+                </h4>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto mb-3">
+                  Upload your CV in standard PDF format. Maximum file size is 15MB.
+                </p>
+
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all shadow-md shadow-emerald-600/20">
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Choose PDF File</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Personal Information Form */}
           <div className="bg-slate-900/90 border border-slate-800/90 rounded-3xl p-6 sm:p-7 shadow-xl">
             <div className="flex items-center justify-between pb-5 border-b border-slate-800/80 mb-6">
               <div>
@@ -738,6 +1038,19 @@ export default function StudentProfilePage() {
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80">
+                <span className="text-xs text-slate-400">Resume Status</span>
+                <span className="text-xs font-bold flex items-center gap-1.5">
+                  {profile?.resumeUrl ? (
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Attached
+                    </span>
+                  ) : (
+                    <span className="text-amber-400">Pending</span>
+                  )}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80">
                 <span className="text-xs text-slate-400">Student ID</span>
                 <span className="text-xs font-mono font-bold text-slate-200">
                   {profile?.studentId || "INX-STU"}
@@ -875,4 +1188,3 @@ export default function StudentProfilePage() {
     </div>
   );
 }
-

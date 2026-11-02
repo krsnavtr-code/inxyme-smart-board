@@ -24,6 +24,9 @@ export interface User {
   referralCode?: string;
   studentId?: string;
   designation?: string;
+  resumeUrl?: string;
+  resumeName?: string;
+  resumeUpdatedAt?: string;
   enrolledCourses?: any[];
   enrolledBatches?: any[];
 }
