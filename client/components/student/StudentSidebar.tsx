@@ -17,7 +17,8 @@ import {
   GraduationCap,
   Sparkles,
   Gift,
-  Briefcase
+  Briefcase,
+  ClipboardCheck
 } from "lucide-react";
 
 export default function StudentSidebar() {
@@ -51,6 +52,12 @@ export default function StudentSidebar() {
       label: "Enrolled Courses",
       icon: BookOpen,
       href: "/student/courses"
+    },
+    {
+      id: "activities",
+      label: "Activities & Quizzes",
+      icon: ClipboardCheck,
+      href: "/student/activities"
     },
     {
       id: "refer",
