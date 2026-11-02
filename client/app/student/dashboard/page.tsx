@@ -22,7 +22,8 @@ import {
   Check,
   RefreshCw,
   Sparkles,
-  Gift
+  Gift,
+  Briefcase
 } from "lucide-react";
 
 export default function StudentDashboardPage() {
@@ -378,6 +379,30 @@ export default function StudentDashboardPage() {
             </p>
           </section>
         )}
+        {/* Career Services & Job Referrals Spotlight Banner */}
+        <section className="bg-gradient-to-r from-indigo-950/70 via-slate-900 to-purple-950/70 border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="space-y-2 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider">
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>Placement Cell &amp; Job Referrals</span>
+            </div>
+            <h2 className="text-xl font-bold text-white">
+              Career Services &amp; Hiring Partner Referrals
+            </h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Explore job openings you have been recommended for from your batch, schedule 1-on-1 mock technical interviews with mentors, and audit your resume.
+            </p>
+          </div>
+
+          <Link
+            href="/student/career"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-indigo-600/30 transition-all hover:scale-[1.02] cursor-pointer shrink-0"
+          >
+            <span>Explore Career Services</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </section>
+
         {/* Refer & Earn Promo Banner */}
         <section className="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
           <div className="space-y-2 max-w-xl">

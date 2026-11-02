@@ -13,7 +13,8 @@ import {
   BookOpen,
   Layers,
   Radio,
-  Gift
+  Gift,
+  Briefcase
 } from "lucide-react";
 
 export default function StudentNavbar() {
@@ -81,6 +82,13 @@ export default function StudentNavbar() {
           className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
         >
           Courses
+        </Link>
+        <Link
+          href="/student/career"
+          className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-1 font-semibold"
+        >
+          <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Careers</span>
         </Link>
         <Link
           href="/student/refer"

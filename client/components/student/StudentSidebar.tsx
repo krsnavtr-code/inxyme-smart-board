@@ -16,7 +16,8 @@ import {
   X,
   GraduationCap,
   Sparkles,
-  Gift
+  Gift,
+  Briefcase
 } from "lucide-react";
 
 export default function StudentSidebar() {
@@ -56,6 +57,12 @@ export default function StudentSidebar() {
       label: "Refer & Earn",
       icon: Gift,
       href: "/student/refer"
+    },
+    {
+      id: "career",
+      label: "Career Services",
+      icon: Briefcase,
+      href: "/student/career"
     },
   ];
 
