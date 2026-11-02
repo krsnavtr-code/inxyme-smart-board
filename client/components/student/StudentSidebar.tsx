@@ -150,9 +150,14 @@ export default function StudentSidebar({
 
           {/* Student Profile Widget */}
           <div className={`border-b border-slate-800/80 transition-all ${isCollapsed ? "p-1.5 flex justify-center" : "p-2"}`}>
-            <div className={`bg-slate-900/80 border border-slate-800/90 rounded-2xl flex items-center transition-all ${isCollapsed ? "p-1.5 justify-center" : "p-1 gap-3"}`}>
+            <Link
+              href="/student/profile"
+              onClick={() => setIsMobileOpen(false)}
+              className={`bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800/90 rounded-2xl flex items-center transition-all group cursor-pointer w-full ${isCollapsed ? "p-1.5 justify-center relative" : "p-2 gap-3"}`}
+              title={isCollapsed ? `My Profile (${user?.name || "Student"})` : undefined}
+            >
               <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-500 flex items-center justify-center font-bold text-xs text-white shadow-md">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-500 flex items-center justify-center font-bold text-xs text-white shadow-md group-hover:scale-105 transition-transform">
                   {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900" />
@@ -160,15 +165,21 @@ export default function StudentSidebar({
 
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-white truncate leading-tight">
+                  <p className="text-xs font-bold text-white truncate leading-tight group-hover:text-emerald-400 transition-colors">
                     {user?.name || "Student"}
                   </p>
                   <p className="text-[10px] text-emerald-400 font-semibold truncate leading-tight mt-0.5">
-                    Enrolled Student
+                    View Profile
                   </p>
                 </div>
               )}
-            </div>
+
+              {isCollapsed && (
+                <div className="hidden lg:group-hover:flex absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-medium whitespace-nowrap shadow-xl z-50">
+                  My Profile
+                </div>
+              )}
+            </Link>
           </div>
 
           {/* Navigation Links */}

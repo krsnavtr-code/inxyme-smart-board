@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<User>;
   register: (credentials: RegisterCredentials) => Promise<User>;
   logout: () => void;
+  updateUser: (updatedData: Partial<User>) => void;
   switchDemoRole: (targetRole: RoleType) => Promise<User>;
 }
 
@@ -111,6 +112,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem("inxyme_user");
   }, []);
 
+  const updateUser = useCallback((updatedData: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updatedData };
+      try {
+        localStorage.setItem("inxyme_user", JSON.stringify(updated));
+      } catch (err) {
+        console.error("Failed to update stored user:", err);
+      }
+      return updated;
+    });
+  }, []);
+
   const switchDemoRole = useCallback(async (targetRole: RoleType): Promise<User> => {
     const demoEmail =
       targetRole === "INSTRUCTOR"
@@ -135,6 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     register,
     logout,
+    updateUser,
     switchDemoRole
   };
 

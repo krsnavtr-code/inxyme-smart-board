@@ -18,6 +18,14 @@ export interface User {
   isApproved?: boolean;
   department?: string;
   originalRole?: string;
+  phone?: string;
+  address?: string;
+  upiId?: string;
+  referralCode?: string;
+  studentId?: string;
+  designation?: string;
+  enrolledCourses?: any[];
+  enrolledBatches?: any[];
 }
 
 export interface InxymeWebsiteUser {

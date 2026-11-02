@@ -9,7 +9,9 @@ import {
   ChevronDown,
   BookOpen,
   Layers,
-  Radio
+  Radio,
+  User,
+  UserCircle
 } from "lucide-react";
 
 export default function StudentNavbar() {
@@ -44,11 +46,8 @@ export default function StudentNavbar() {
     <header className="h-16 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
       {/* Left side: Brand & Portal Badge */}
       <div className="flex items-center gap-3 pl-12 lg:pl-0">
-        <span className="font-extrabold text-white text-base tracking-tight hidden sm:inline-block">
-          Student Portal
-        </span>
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          Inxyme LMS
+          Inxyme Smart Board
         </span>
       </div>
 
@@ -81,26 +80,45 @@ export default function StudentNavbar() {
 
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur-2xl z-50 p-2 animate-in fade-in zoom-in-95">
-              <div className="p-3 border-b border-slate-800/80 mb-1">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-500 flex items-center justify-center font-bold text-sm text-white shadow-md shrink-0">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : "S"}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-white truncate leading-tight">
+              <Link
+                href="/student/profile"
+                onClick={() => setIsDropdownOpen(false)}
+                className="p-3 border-b border-slate-800/80 mb-1 flex items-center gap-3 hover:bg-slate-800/60 rounded-xl transition-all group cursor-pointer block"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-500 flex items-center justify-center font-bold text-sm text-white shadow-md shrink-0 group-hover:scale-105 transition-transform">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : "S"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-white truncate leading-tight group-hover:text-emerald-400 transition-colors">
                       {user?.name || "Student"}
                     </p>
-                    <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                      {user?.email || "student@inxyme.com"}
-                    </p>
-                    <span className="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
-                      Active Student
+                    <span className="text-[10px] text-slate-500 group-hover:text-slate-300">
+                      View
                     </span>
                   </div>
+                  <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                    {user?.email || "student@inxyme.com"}
+                  </p>
+                  <span className="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
+                    Active Student
+                  </span>
                 </div>
-              </div>
+              </Link>
 
               <div className="space-y-0.5">
+                <Link
+                  href="/student/profile"
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all group"
+                >
+                  <UserCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="text-white font-semibold">My Profile</span>
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    Edit
+                  </span>
+                </Link>
+
                 <Link
                   href="/student/batches"
                   onClick={() => setIsDropdownOpen(false)}
