@@ -21,7 +21,8 @@ import {
   Copy,
   Check,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Gift
 } from "lucide-react";
 
 export default function StudentDashboardPage() {
@@ -377,6 +378,29 @@ export default function StudentDashboardPage() {
             </p>
           </section>
         )}
+        {/* Refer & Earn Promo Banner */}
+        <section className="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="space-y-2 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+              <Gift className="w-3.5 h-3.5" />
+              <span>Earn ₹1,000 Cash Per Friend</span>
+            </div>
+            <h2 className="text-xl font-bold text-white">
+              Refer Friends &amp; Peers to Inxyme LMS
+            </h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Give your friends a 15% discount on any certification program. When they enroll, you earn flat ₹1,000 cash rewards directly into your UPI or bank account!
+            </p>
+          </div>
+
+          <Link
+            href="/student/refer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-emerald-600/30 transition-all hover:scale-[1.02] cursor-pointer shrink-0"
+          >
+            <span>Open Refer &amp; Earn Hub</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </section>
       </main>
     </div>
   );

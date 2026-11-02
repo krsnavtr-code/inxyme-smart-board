@@ -12,7 +12,8 @@ import {
   Sparkles,
   BookOpen,
   Layers,
-  Radio
+  Radio,
+  Gift
 } from "lucide-react";
 
 export default function StudentNavbar() {
@@ -80,6 +81,13 @@ export default function StudentNavbar() {
           className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
         >
           Courses
+        </Link>
+        <Link
+          href="/student/refer"
+          className="px-3 py-1.5 rounded-lg text-emerald-400 hover:text-white hover:bg-emerald-600/20 transition-colors flex items-center gap-1 font-semibold"
+        >
+          <Gift className="w-3.5 h-3.5" />
+          <span>Refer &amp; Earn</span>
         </Link>
         <Link
           href="/live/learn-board"

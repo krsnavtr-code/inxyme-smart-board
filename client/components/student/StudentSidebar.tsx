@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   GraduationCap,
-  Sparkles
+  Sparkles,
+  Gift
 } from "lucide-react";
 
 export default function StudentSidebar() {
@@ -49,6 +50,12 @@ export default function StudentSidebar() {
       label: "Enrolled Courses",
       icon: BookOpen,
       href: "/student/courses"
+    },
+    {
+      id: "refer",
+      label: "Refer & Earn",
+      icon: Gift,
+      href: "/student/refer"
     },
   ];
 
